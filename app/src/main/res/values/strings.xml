@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Aiphone</string>
+
+    <string name="adb_pairing_channel_name">ワイヤレスデバッグ ペアリング</string>
+    <string name="adb_pairing_searching_title">ペアリングサービスを検索中</string>
+    <string name="adb_pairing_searching_text">ワイヤレスデバッグで「ペアリングコードを使用してデバイスをペア設定」を開いてください</string>
+    <string name="adb_pairing_found_title">ペアリングコードを入力</string>
+    <string name="adb_pairing_found_text">6桁のペアリングコードを入力してください</string>
+    <string name="adb_pairing_input_label">ペアリングコード</string>
+    <string name="adb_pairing_input_action">入力</string>
+    <string name="adb_pairing_working_title">ペアリング中…</string>
+    <string name="adb_pairing_working_text">しばらくお待ちください</string>
+    <string name="adb_pairing_starting_title">サービス起動中…</string>
+    <string name="adb_pairing_starting_text">ペアリング成功。特権プロセスを起動しています</string>
+    <string name="adb_pairing_success_title">起動完了</string>
+    <string name="adb_pairing_success_text">特権サービスが起動しました。アプリに戻れます</string>
+    <string name="adb_pairing_failed_title">失敗</string>
+    <string name="adb_pairing_failed_text">コードを確認して再試行してください</string>
+    <string name="adb_pairing_stop_action">停止</string>
+</resources>

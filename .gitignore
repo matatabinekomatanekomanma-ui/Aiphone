@@ -1,0 +1,29 @@
+# Android Studio / local machine files
+.idea/
+.kotlin/
+*.iml
+local.properties
+.DS_Store
+Thumbs.db
+
+# Gradle caches and build outputs
+.gradle/
+**/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing material and local secrets
+*.jks
+*.keystore
+keystore.properties
+secrets.properties
+.env
+.env.*
+!.env.example
+
+# Logs and packaged binaries
+*.log
+*.apk
+*.aab
+app/release/

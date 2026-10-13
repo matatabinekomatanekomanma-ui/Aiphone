@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="warn_text">#FFFF8A80</color>
+    <color name="ok_green">#FF66D68E</color>
+    <color name="sub_text">#FFC4C4C4</color>
+    <color name="divider">#44FFFFFF</color>
+</resources>

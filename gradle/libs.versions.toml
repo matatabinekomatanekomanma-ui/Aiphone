@@ -1,0 +1,27 @@
+[versions]
+agp = "9.4.1"
+coreKtx = "1.19.1"
+appcompat = "1.8.0"
+material = "1.14.0"
+activityKtx = "1.13.0"
+okhttp = "4.12.0"
+privKit = "0.17.6"
+lifecycleRuntimeKtx = "2.11.0"
+hiddenApiBypass = "6.2"
+kotlin = "2.4.10"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+
+priv-ui = { group = "io.github.priv-kit", name = "priv-ui", version.ref = "privKit" }
+
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+hidden-api-bypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version.ref = "hiddenApiBypass" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    API キー・個人情報(SharedPreferences)を含むためバックアップ対象にしない。
+    Android 11 以前の自動バックアップ用（allowBackup=false と二重で明示）。
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="file" path="." />
+</full-backup-content>

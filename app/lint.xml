@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- 多言語化未対応・日本語固定アプリのための表示文字列警告抑制 -->
+    <issue id="HardcodedText" severity="ignore" />
+    <issue id="SetTextI18n" severity="ignore" />
+
+    <!-- UIデザイン・レイアウト関連警告の抑制 -->
+    <issue id="Autofill" severity="ignore" />
+    <issue id="ButtonStyle" severity="ignore" />
+    <issue id="TooManyViews" severity="ignore" />
+
+    <!-- 依存関係バージョン確認の制御 -->
+    <issue id="NewerVersionAvailable" severity="ignore" />
+    <issue id="GradleDependency" severity="ignore" />
+
+    <!-- アセット・リソース関連の警告抑制 -->
+    <issue id="UnusedResources" severity="ignore" />
+    <issue id="IconLocation" severity="ignore" />
+</lint>

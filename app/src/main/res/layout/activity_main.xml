@@ -1,0 +1,1513 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:tabGravity="fill"
+        app:tabMode="fixed"
+        xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- ===== 設定タブ ===== -->
+        <ScrollView
+            android:id="@+id/pageSettings"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="動作に必要な設定"
+                    android:textSize="17sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+
+                <!-- priv-kit / ワイヤレスデバッグ -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/markShizuku"
+                        android:layout_width="32dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="✗"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="priv-kit 接続"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/subShizuku"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/sub_text"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btnConnect"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="0dp"
+                        android:text="設定" />
+
+                    <Button
+                        android:id="@+id/btnGuidePriv"
+                        style="@style/Widget.Aiphone.GuideButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="設定方法" />
+                </LinearLayout>
+
+
+                <!-- Gemini キー -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/markGemini"
+                        android:layout_width="32dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="✗"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Gemini API キー"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/subGemini"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/sub_text"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btnGetKey"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="0dp"
+                        android:text="設定" />
+
+                    <Button
+                        android:id="@+id/btnGuideGemini"
+                        style="@style/Widget.Aiphone.GuideButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="設定方法" />
+                </LinearLayout>
+
+
+                <EditText
+                    android:id="@+id/etApiKey"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="AQ... または AIza..."
+                    android:inputType="textPassword"
+                    android:maxLines="1"
+                    android:singleLine="true" />
+
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="20dp"
+                    android:background="@color/divider" />
+
+
+                <!-- App language uses the same full-width list-box style as other settings. -->
+                <TextView
+                    android:id="@+id/tvLanguageLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="アプリの表示言語"
+                    android:textSize="15sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+
+                <Spinner
+                    android:id="@+id/spinnerLanguage"
+                    android:background="@drawable/bg_spinner"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="40dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:spinnerMode="dropdown" />
+
+                <TextView
+                    android:id="@+id/headerSectionPersonal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:text="▶ 個人情報"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorPrimary" />
+
+                <LinearLayout
+                    android:id="@+id/sectionPersonal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="本人の個人情報（AIに渡す）"
+                    android:textSize="17sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="相手から詳しく聞かれたら、あなたに確認してから答えます。「許可なしで伝えてよい」にした項目は、確認なしですぐ答えます(初期は全項目「確認する」)。読みを入れると、AIは「漢字(読み)」で受け取り、読みどおりに発音します。入力した内容は自動で保存され、端末内で暗号化して保管されます。"
+                    android:textColor="@color/sub_text"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="名前（必須・名乗り用）"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etPiiName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:minHeight="44dp"
+                    android:hint="例: 山田 太郎"
+                    android:inputType="textPersonName"
+                    android:maxLines="1"
+                    android:singleLine="true" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="名前の読み"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etPiiKana"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:minHeight="44dp"
+                    android:hint="ひらがな（漢字だけだと読み間違えるときに）"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:singleLine="true" />
+
+                <CheckBox
+                    android:id="@+id/cbAutoName"
+                    android:layout_width="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_height="wrap_content"
+                    android:text="許可なしで伝えてよい"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="電話番号"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etPiiPhone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:minHeight="44dp"
+                    android:hint="例: 090-0000-0000"
+                    android:inputType="phone"
+                    android:maxLines="1"
+                    android:singleLine="true" />
+
+                <CheckBox
+                    android:id="@+id/cbAutoPhone"
+                    android:layout_width="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_height="wrap_content"
+                    android:text="許可なしで伝えてよい"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="メールアドレス"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etPiiEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:minHeight="44dp"
+                    android:hint="例: name@example.com"
+                    android:inputType="textEmailAddress"
+                    android:maxLines="1"
+                    android:singleLine="true" />
+
+                <CheckBox
+                    android:id="@+id/cbAutoEmail"
+                    android:layout_width="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_height="wrap_content"
+                    android:text="許可なしで伝えてよい"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="住所"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etPiiAddress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:minHeight="44dp"
+                    android:hint="例: 東京都〇〇区1-2-3"
+                    android:inputType="textPostalAddress"
+                    android:maxLines="2" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="住所の読み（任意）"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etPiiAddressKana"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:minHeight="44dp"
+                    android:hint="ひらがな"
+                    android:inputType="text"
+                    android:maxLines="2" />
+
+                <CheckBox
+                    android:id="@+id/cbAutoAddress"
+                    android:layout_width="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_height="wrap_content"
+                    android:text="許可なしで伝えてよい"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="生年月日"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etPiiBirthday"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:minHeight="44dp"
+                    android:hint="例: 1990年1月1日"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:singleLine="true" />
+
+                <CheckBox
+                    android:id="@+id/cbAutoBirthday"
+                    android:layout_width="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_height="wrap_content"
+                    android:text="許可なしで伝えてよい"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="勤務先・部署"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etPiiCompany"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:minHeight="44dp"
+                    android:hint="例: 〇〇株式会社 営業部"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:singleLine="true" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="勤務先の読み（任意）"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etPiiCompanyKana"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:minHeight="44dp"
+                    android:hint="ひらがな"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:singleLine="true" />
+
+                <CheckBox
+                    android:id="@+id/cbAutoCompany"
+                    android:layout_width="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_height="wrap_content"
+                    android:text="許可なしで伝えてよい"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="その他"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etPiiNotes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:minHeight="44dp"
+                    android:hint="伝えてよいこと・伝えてはいけないこと"
+                    android:inputType="textMultiLine"
+                    android:minLines="2"
+                    android:gravity="top" />
+
+                <CheckBox
+                    android:id="@+id/cbAutoNotes"
+                    android:layout_width="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_height="wrap_content"
+                    android:text="許可なしで伝えてよい"
+                    android:textSize="13sp" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="20dp"
+                    android:background="@color/divider" />
+
+
+                </LinearLayout>
+                <TextView
+                    android:id="@+id/headerSectionPrep"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:text="▶ 準備"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorPrimary" />
+
+                <LinearLayout
+                    android:id="@+id/sectionPrep"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Gemma の思考レベル（準備タブ・高いほど丁寧だが遅い。既定は中）"
+                    android:textSize="15sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+
+                <Spinner
+                    android:id="@+id/spGemmaThinking"
+                    android:background="@drawable/bg_spinner"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="40dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Gemma の最大リクエスト回数（失敗時の自動リトライ含む）"
+                    android:textSize="15sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="1〜10回。混雑時は多めにすると成功しやすいです（既定 5）"
+                    android:textSize="12sp" />
+
+                <Spinner
+                    android:id="@+id/spGemmaMaxAttempts"
+                    android:background="@drawable/bg_spinner"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="40dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Gemma の準備チャット用プロンプト（システム指示）"
+                    android:textSize="15sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="準備タブでGemmaと会話するときの指示です。編集内容は次の送信から反映されます。個人情報保護の必須ルールは別途付加されます。"
+                    android:textSize="12sp"
+                    android:textColor="@color/sub_text" />
+
+                <EditText
+                    android:id="@+id/etGemmaChatPrompt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:minLines="7"
+                    android:scrollbars="vertical"
+                    android:hint="Gemmaとの準備チャットの指示" />
+
+                <Button
+                    android:id="@+id/btnGemmaChatPromptReset"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:text="既定の準備チャット用プロンプトに戻す" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Gemma の用件まとめ用プロンプト（JSON出力）"
+                    android:textSize="15sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="「まとめる」ボタンで使う指示です。アプリが読み取るJSON形式とキーは、出力の末尾で必須条件として指定されます。"
+                    android:textSize="12sp"
+                    android:textColor="@color/sub_text" />
+
+                <EditText
+                    android:id="@+id/etGemmaSummaryPrompt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:minLines="5"
+                    android:scrollbars="vertical"
+                    android:hint="用件をJSONにまとめる指示" />
+
+                <Button
+                    android:id="@+id/btnGemmaSummaryPromptReset"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:text="既定の用件まとめ用プロンプトに戻す" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="20dp"
+                    android:background="@color/divider" />
+
+                </LinearLayout>
+                <TextView
+                    android:id="@+id/headerSectionCall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:text="▶ 通話"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorPrimary" />
+
+                <LinearLayout
+                    android:id="@+id/sectionCall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Gemini Live の話し方"
+                    android:textSize="17sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="ボイス（全30種）"
+                    android:textStyle="bold" />
+
+                <Spinner
+                    android:id="@+id/spVoice"
+                    android:background="@drawable/bg_spinner"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="40dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="20dp"
+                    android:background="@color/divider" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="音声検出（VAD）"
+                    android:textSize="15sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="相手の声・雑音で AI の発話が途切れる場合に調整します。次の通話から反映されます。"
+                    android:textColor="@color/sub_text"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="話し始めの感度（低いほど雑音で割り込まれにくい）" />
+
+                <Spinner
+                    android:id="@+id/spVadStart"
+                    android:background="@drawable/bg_spinner"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="40dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="話し終わりの感度（高いほど早く話し終わりと判断）" />
+
+                <Spinner
+                    android:id="@+id/spVadEnd"
+                    android:background="@drawable/bg_spinner"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="40dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="無音の長さ（ミリ秒、100〜3000。推奨 500〜800）" />
+
+                <EditText
+                    android:id="@+id/etVadSilence"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="600"
+                    android:inputType="number"
+                    android:maxLength="4"
+                    android:maxLines="1"
+                    android:singleLine="true" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="20dp"
+                    android:background="@color/divider" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="プロンプト（システム指示）"
+                    android:textSize="17sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etPrompt"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top|start"
+                    android:hint="発信代行の追加指示（空なら既定）。個人情報は上の欄へ"
+                    android:inputType="textMultiLine"
+                    android:minLines="5"
+                    android:scrollbars="vertical" />
+
+                <Button
+                    android:id="@+id/btnPromptReset"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:text="既定のプロンプトに戻す" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="20dp"
+                    android:background="@color/divider" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="試聴用：相手の第一声"
+                    android:textSize="15sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etTestLine"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLines="2" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnVoiceTest"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="▶ この設定で話してみる" />
+
+                    <Button
+                        android:id="@+id/btnVoiceStop"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="停止" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvVoiceState"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvVoiceText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:background="#1A06C755"
+                    android:padding="8dp"
+                    android:textIsSelectable="true"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="通話終了後の電話待機"
+                    android:textSize="15sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+
+                <CheckBox
+                    android:id="@+id/cbClearArmOnEnd"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:checked="true"
+                    android:text="通話終了後に電話待機を解除する"
+                    android:textSize="15sp" />
+
+                <CheckBox
+                    android:id="@+id/cbDeleteBriefOnEnd"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:checked="false"
+                    android:text="通話終了後にセットした用件を削除する"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="解除のみの場合、用件は一覧に残ります。削除すると一覧からも消えます。"
+                    android:textSize="12sp"
+                    android:textColor="@color/sub_text" />
+
+                <Button
+                    android:id="@+id/btnDiag"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="診断（priv-kit 経由）" />
+            
+                </LinearLayout>
+                <TextView
+                    android:id="@+id/headerSectionTranslate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:text="▶ 翻訳"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorPrimary" />
+
+                <LinearLayout
+                    android:id="@+id/sectionTranslate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <CheckBox
+                        android:id="@+id/cbTrHearOriginal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:checked="false"
+                        android:text="相手の元の声も一緒に聞こえるようにする"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="オフのとき、相手の声は消し、翻訳音声だけを再生します。"
+                        android:textSize="12sp"
+                        android:textColor="@color/sub_text" />
+
+                    <CheckBox
+                        android:id="@+id/cbTrEchoTarget"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:checked="false"
+                        android:text="翻訳先言語のエコー（相手がすでに翻訳先の言語で話したときもそのまま流す）"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="オフのとき、翻訳先と同じ言語の発話は無音になります（重複防止）。"
+                        android:textSize="12sp"
+                        android:textColor="@color/sub_text" />
+
+                </LinearLayout>
+</LinearLayout>
+        </ScrollView>
+
+        <!-- ===== 通話タブ ===== -->
+        <LinearLayout
+            android:id="@+id/pageCall"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvWarn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#33FF5252"
+                android:padding="8dp"
+                android:text="未完了の設定があります。「設定」タブを確認してください。"
+                android:visibility="gone" />
+
+            <!-- AI通話のスイッチ（行全体をタップしても切り替わる） -->
+            <LinearLayout
+                android:id="@+id/aiSwitchRow"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_ai_row_off"
+                android:gravity="center_vertical"
+                android:minHeight="76dp"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="10dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="AI通話"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvAiState"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="オフ"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchAi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:scaleX="1.4"
+                    android:scaleY="1.4"
+                    app:thumbTint="@color/ai_switch_thumb"
+                    app:trackTint="@color/ai_switch_track"
+                    app:useMaterialThemeColors="false" />
+            </LinearLayout>
+
+            <ScrollView
+                android:id="@+id/chatScroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:layout_weight="1"
+                android:fillViewport="true">
+
+                <LinearLayout
+                    android:id="@+id/chatContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </ScrollView>
+
+            <LinearLayout
+                android:id="@+id/askCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_ask_card"
+                android:orientation="vertical"
+                android:padding="10dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tvAskTitle"
+                    android:textColor="#0B7A3A"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="AIが判断を求めています"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvAskQuestion"
+                    android:textColor="#10281A"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnAsk1"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                    android:backgroundTint="#CDEBD8"
+                    android:textColor="#10281A"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="start|center_vertical"
+                    android:textAlignment="viewStart"
+                    android:textAllCaps="false" />
+
+                <Button
+                    android:id="@+id/btnAsk2"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                    android:backgroundTint="#CDEBD8"
+                    android:textColor="#10281A"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="start|center_vertical"
+                    android:textAlignment="viewStart"
+                    android:textAllCaps="false" />
+
+                <Button
+                    android:id="@+id/btnAsk3"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                    android:backgroundTint="#CDEBD8"
+                    android:textColor="#10281A"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="start|center_vertical"
+                    android:textAlignment="viewStart"
+                    android:textAllCaps="false" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/etAskText"
+                        android:textColor="#10281A"
+                        android:textColorHint="#5F7A68"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="返答したい内容がなければ、指示を入力(例: 来週は都合が悪いと伝えて)"
+                        android:inputType="textMultiLine"
+                        android:maxLines="3"
+                        android:minHeight="48dp"
+                        android:textSize="14sp" />
+
+                    <Button
+                        android:id="@+id/btnAskMic"
+                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                    android:backgroundTint="#CDEBD8"
+                    android:textColor="#10281A"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:minWidth="0dp"
+                        android:text="🎤" />
+
+                    <Button
+                        android:id="@+id/btnAskSend"
+                        android:backgroundTint="#0B7A3A"
+                        android:textColor="#FFFFFF"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="送信" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvAskMic"
+                    android:textColor="#10281A"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ===== 準備タブ（Gemma） ===== -->
+        <LinearLayout
+            android:id="@+id/pagePrep"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:padding="8dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="住所・生年月日・電話番号などの個人情報は入力しないでください（設定に登録した項目名だけが参照されます）"
+                android:textSize="12sp"
+                android:textColor="@color/warn_text"
+                android:paddingBottom="4dp" />
+
+            <LinearLayout
+                android:id="@+id/prepActiveBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:visibility="gone"
+                android:paddingBottom="4dp">
+
+                <TextView
+                    android:id="@+id/tvPrepActive"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/ok_green" />
+
+                <Button
+                    android:id="@+id/btnPrepUnset"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="0dp"
+                    android:text="解除"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvPrepSavedTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="4dp"
+                android:paddingBottom="2dp"
+                android:text="保存した用件（タップで編集）"
+                android:textStyle="bold"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:id="@+id/prepSavedList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="4dp" />
+
+            <LinearLayout
+                android:id="@+id/prepLoadingRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="8dp"
+                android:visibility="gone">
+
+                <ProgressBar
+                    style="?android:attr/progressBarStyle"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:indeterminate="true" />
+
+                <TextView
+                    android:id="@+id/tvPrepLoading"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:text="Gemma の応答を待っています…"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <ScrollView
+                android:id="@+id/prepChatScroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:fillViewport="true">
+
+                <LinearLayout
+                    android:id="@+id/prepChatContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="4dp" />
+            </ScrollView>
+
+            <LinearLayout
+                android:id="@+id/prepInputRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingTop="4dp">
+
+                <EditText
+                    android:id="@+id/etPrepInput"
+                    android:background="@drawable/bg_input"
+                    android:padding="10dp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="用件・相手・聞きたいことなど"
+                    android:inputType="textMultiLine"
+                    android:maxLines="4"
+                    android:minHeight="48dp"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btnPrepSend"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="送信" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingTop="2dp">
+
+                <Button
+                    android:id="@+id/btnPrepSummarize"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="まとめる" />
+
+                <Button
+                    android:id="@+id/btnPrepClearChat"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="履歴クリア" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvPrepStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:paddingTop="2dp" />
+
+            <ScrollView
+                android:id="@+id/prepEditScroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="まとめ（編集してからセット）"
+                        android:textStyle="bold"
+                        android:textSize="15sp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="発信先の名前" android:textSize="13sp" android:textStyle="bold" android:paddingTop="10dp" />
+                    <EditText android:id="@+id/etBriefDest" android:background="@drawable/bg_input" android:padding="10dp" android:layout_marginTop="2dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" android:minHeight="40dp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="用件（1〜2文）" android:textSize="13sp" android:textStyle="bold" android:paddingTop="10dp" />
+                    <EditText android:id="@+id/etBriefPurpose" android:background="@drawable/bg_input" android:padding="10dp" android:layout_marginTop="2dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textMultiLine" android:minLines="2" android:minHeight="48dp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="伝えること" android:textSize="13sp" android:textStyle="bold" android:paddingTop="10dp" />
+                    <EditText android:id="@+id/etBriefTell" android:background="@drawable/bg_input" android:padding="10dp" android:layout_marginTop="2dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textMultiLine" android:minLines="2" android:minHeight="48dp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="聞くこと" android:textSize="13sp" android:textStyle="bold" android:paddingTop="10dp" />
+                    <EditText android:id="@+id/etBriefAsk" android:background="@drawable/bg_input" android:padding="10dp" android:layout_marginTop="2dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textMultiLine" android:minLines="2" android:minHeight="48dp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="判断してよい範囲（日時・金額・条件）" android:textSize="13sp" android:textStyle="bold" android:paddingTop="10dp" />
+                    <EditText android:id="@+id/etBriefScope" android:background="@drawable/bg_input" android:padding="10dp" android:layout_marginTop="2dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textMultiLine" android:minLines="2" android:minHeight="48dp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="言ってはいけないこと" android:textSize="13sp" android:textStyle="bold" android:paddingTop="10dp" />
+                    <EditText android:id="@+id/etBriefDont" android:background="@drawable/bg_input" android:padding="10dp" android:layout_marginTop="2dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textMultiLine" android:minLines="2" android:minHeight="48dp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="想定される質問と答え" android:textSize="13sp" android:textStyle="bold" android:paddingTop="10dp" />
+                    <EditText android:id="@+id/etBriefQa" android:background="@drawable/bg_input" android:padding="10dp" android:layout_marginTop="2dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textMultiLine" android:minLines="2" android:minHeight="48dp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="調べて分かった事実（未確認・出典付き）" android:textSize="13sp" android:textStyle="bold" android:paddingTop="10dp" />
+                    <EditText android:id="@+id/etBriefFacts" android:background="@drawable/bg_input" android:padding="10dp" android:layout_marginTop="2dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textMultiLine" android:minLines="2" android:minHeight="48dp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="終わりの条件" android:textSize="13sp" android:textStyle="bold" android:paddingTop="10dp" />
+                    <EditText android:id="@+id/etBriefEnd" android:background="@drawable/bg_input" android:padding="10dp" android:layout_marginTop="2dp" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textMultiLine" android:minLines="2" android:minHeight="48dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="16dp">
+
+                        <Button
+                            android:id="@+id/btnBriefCancel"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="戻る" />
+
+                        <Button
+                            android:id="@+id/btnBriefDelete"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="6dp"
+                            android:text="削除" />
+
+                        <Button
+                            android:id="@+id/btnBriefSave"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="6dp"
+                            android:text="保存" />
+
+                        <Button
+                            android:id="@+id/btnBriefSet"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="6dp"
+                            android:backgroundTint="#0B7A3A"
+                            android:textColor="#FFFFFF"
+                            android:text="セット" />
+                    </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
+        </LinearLayout>
+
+        <!-- ===== 翻訳タブ（Gemini Live Translate） ===== -->
+        <LinearLayout
+            android:id="@+id/pageTranslate"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:padding="12dp">
+
+            <!-- 設定部分（画面が狭いときはここだけスクロール） -->
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="リアルタイム翻訳（仮実装）。セットすると、次の通話で自動的に始まり、通話終了で解除されます。"
+                        android:textSize="12sp"
+                        android:textColor="@color/sub_text"
+                        android:paddingBottom="6dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="自分の言語（相手の声をこの言語に翻訳して聞く。「翻訳しない」なら相手の声はそのまま）"
+                        android:textStyle="bold"
+                        android:textSize="13sp" />
+
+                    <Spinner
+                        android:id="@+id/spTrMy"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="4dp"
+                        android:text="相手の言語（自分の声をこの言語に翻訳して相手へ送る。「自動」なら相手の声から判定、「翻訳しない」なら自分の声はそのまま）"
+                        android:textStyle="bold"
+                        android:textSize="13sp" />
+
+                    <Spinner
+                        android:id="@+id/spTrTheir"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:id="@+id/tvTrState"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="6dp"
+                        android:paddingBottom="4dp"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btnTrSet"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:backgroundTint="#0B7A3A"
+                            android:textColor="#FFFFFF"
+                            android:text="セット（次の通話で自動開始）" />
+
+                        <Button
+                            android:id="@+id/btnTrUnset"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="解除" />
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btnTrNow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="今すぐ開始（通話中のテスト）" />
+                </LinearLayout>
+            </ScrollView>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="6dp"
+                android:text="翻訳ログ（原文 → 訳）"
+                android:textStyle="bold"
+                android:textSize="13sp" />
+
+            <ScrollView
+                android:id="@+id/trLogScroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/tvTrLog"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textIsSelectable="true"
+                    android:textSize="13sp"
+                    android:paddingTop="4dp" />
+            </ScrollView>
+        </LinearLayout>
+    </FrameLayout>
+</LinearLayout>
