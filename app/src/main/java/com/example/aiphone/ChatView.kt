@@ -32,8 +32,17 @@ class ChatView(
         TypedValue.COMPLEX_UNIT_DIP, v, context.resources.displayMetrics
     ).toInt()
 
+    private fun themeColor(attribute: Int, fallback: Int): Int {
+        val value = TypedValue()
+        if (!context.theme.resolveAttribute(attribute, value, true)) return fallback
+        return if (value.resourceId != 0) {
+            androidx.core.content.ContextCompat.getColor(context, value.resourceId)
+        } else value.data
+    }
+
     init {
-        scroll.setBackgroundColor("#7494C0".toColorInt())  // LINE 風の背景
+        // 通話タブだけ青い背景にせず、他タブと同じテーマ背景（昼夜対応）を使う。
+        scroll.setBackgroundColor(themeColor(android.R.attr.colorBackground, Color.WHITE))
         container.setPadding(dp(8f), dp(8f), dp(8f), dp(8f))
     }
 
@@ -101,12 +110,12 @@ class ChatView(
         val time = TextView(context).apply {
             text = fmt.format(Date(m.time))
             textSize = 10f
-            setTextColor("#E6FFFFFF".toColorInt())
+            setTextColor(themeColor(android.R.attr.textColorSecondary, Color.DKGRAY))
         }
         val name = TextView(context).apply {
             text = if (ai) "AI" else AppLanguage.tr("相手", context)
             textSize = 11f
-            setTextColor("#F0FFFFFF".toColorInt())
+            setTextColor(themeColor(android.R.attr.textColorSecondary, Color.DKGRAY))
             setPadding(dp(6f), 0, dp(6f), dp(2f))
         }
 

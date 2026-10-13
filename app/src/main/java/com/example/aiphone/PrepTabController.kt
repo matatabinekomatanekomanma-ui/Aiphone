@@ -2,12 +2,20 @@ package com.example.aiphone
 
 import android.content.SharedPreferences
 import android.provider.Settings
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.view.Gravity
+import android.util.TypedValue
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -30,11 +38,19 @@ class PrepTabController(
     private val log: (String) -> Unit,
 ) {
     private var prepBusy = false
+    /** 最後のGemmaリクエストが失敗した場合のみ、同じ会話内容で再送するため保持する。 */
+    private var retryPrepText: String? = null
+    private var retryPrepContentsJson: String? = null
+    private var retryPrepSystemInstruction: String? = null
+    /** 失敗したユーザーメッセージ。再送アイコンはこの吹き出しの中だけに表示する。 */
+    private var retryPrepMessage: PrepChatStore.Msg? = null
+    private val prepTimeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
     fun setup() {
         activity.findViewById<Button>(R.id.btnPrepSend).setOnClickListener { sendPrepMessage() }
         activity.findViewById<Button>(R.id.btnPrepSummarize).setOnClickListener { summarizePrep() }
         activity.findViewById<Button>(R.id.btnPrepClearChat).setOnClickListener {
+            clearPrepRetry()
             PrepChatStore.clear()
             renderPrepChat()
             setPrepStatus("履歴をクリアしました")
@@ -146,39 +162,158 @@ class PrepTabController(
         }
     }
 
+    private fun dp(value: Float): Int =
+        (value * activity.resources.displayMetrics.density + 0.5f).toInt()
+
+    private fun prepBubbleBackground(color: Int, user: Boolean): GradientDrawable =
+        GradientDrawable().apply {
+            setColor(color)
+            val radius = dp(16f).toFloat()
+            val small = dp(3f).toFloat()
+            // 右側（こちら）は右下、左側（Gemma）は左下を小さくして吹き出し風にする。
+            cornerRadii = if (user) {
+                floatArrayOf(radius, radius, radius, radius, small, small, radius, radius)
+            } else {
+                floatArrayOf(radius, radius, radius, radius, radius, radius, small, small)
+            }
+        }
+
+    private fun themeColor(attribute: Int, fallback: Int): Int {
+        val value = TypedValue()
+        if (!activity.theme.resolveAttribute(attribute, value, true)) return fallback
+        return if (value.resourceId != 0) {
+            androidx.core.content.ContextCompat.getColor(activity, value.resourceId)
+        } else value.data
+    }
+
     private fun renderPrepChat() {
         val container = activity.findViewById<LinearLayout>(R.id.prepChatContainer)
         container.removeAllViews()
         val scroll = activity.findViewById<android.widget.ScrollView>(R.id.prepChatScroll)
+        val secondaryText = themeColor(android.R.attr.textColorSecondary, Color.DKGRAY)
+        val maxBubbleWidth = (activity.resources.displayMetrics.widthPixels * 0.68f).toInt()
+
         for (m in PrepChatStore.messages) {
-            val tv = TextView(activity)
-            val pad = (8 * activity.resources.displayMetrics.density).toInt()
-            tv.setPadding(pad, pad, pad, pad)
-            when (m.role) {
-                PrepChatStore.USER -> {
-                    tv.text = "${AppLanguage.tr("あなた", activity)}\n${m.text}"
-                    tv.setBackgroundColor(0xFFCDEBD8.toInt())
-                    tv.setTextColor(0xFF10281A.toInt())
+            if (m.role == PrepChatStore.SYSTEM) {
+                val system = TextView(activity).apply {
+                    text = m.text
+                    textSize = 11f
+                    gravity = Gravity.CENTER
+                    setTextColor(Color.WHITE)
+                    setPadding(dp(10f), dp(5f), dp(10f), dp(5f))
+                    background = GradientDrawable().apply {
+                        setColor(0x99000000.toInt())
+                        cornerRadius = dp(10f).toFloat()
+                    }
                 }
-                PrepChatStore.MODEL -> {
-                    tv.text = "Gemma\n${m.text}"
-                    tv.setBackgroundColor(0xFFFFFFFF.toInt())
-                    tv.setTextColor(0xFF10281A.toInt())
-                }
-                else -> {
-                    tv.text = m.text
-                    tv.setTextColor(0xFF555555.toInt())
-                    tv.textSize = 12f
-                }
+                container.addView(system, LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    topMargin = dp(8f)
+                    bottomMargin = dp(4f)
+                })
+                continue
             }
-            val lp = LinearLayout.LayoutParams(
+
+            val user = m.role == PrepChatStore.USER
+            val side = if (user) Gravity.END else Gravity.START
+            val messageColumn = LinearLayout(activity).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = side
+            }
+            val speaker = TextView(activity).apply {
+                text = if (user) AppLanguage.tr("あなた", activity) else "Gemma"
+                textSize = 11f
+                setTextColor(secondaryText)
+                setPadding(dp(6f), 0, dp(6f), dp(2f))
+            }
+            messageColumn.addView(speaker, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { gravity = side })
+
+            val bubble = LinearLayout(activity).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(12f), dp(8f), dp(8f), dp(5f))
+                background = prepBubbleBackground(
+                    if (user) Color.rgb(6, 199, 85) else Color.WHITE,
+                    user,
+                )
+            }
+            val body = TextView(activity).apply {
+                text = m.text
+                textSize = 15f
+                setTextColor(if (user) Color.WHITE else Color.rgb(34, 34, 34))
+                setTextIsSelectable(true)
+                maxWidth = maxBubbleWidth - dp(20f)
+            }
+            bubble.addView(body, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ))
+
+            val meta = LinearLayout(activity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = if (user) Gravity.END or Gravity.CENTER_VERTICAL else Gravity.START or Gravity.CENTER_VERTICAL
+            }
+            val time = TextView(activity).apply {
+                text = prepTimeFormat.format(Date(m.time))
+                textSize = 10f
+                setTextColor(if (user) 0xDFFFFFFF.toInt() else 0x99000000.toInt())
+            }
+            if (user) {
+                // こちら側の時刻と、失敗した発言にだけ付く再送アイコンを同じバブル内に置く。
+                meta.addView(time, LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { gravity = Gravity.CENTER_VERTICAL })
+                if (m === retryPrepMessage && !prepBusy) {
+                    val retry = ImageButton(activity).apply {
+                        setImageResource(R.drawable.ic_refresh)
+                        contentDescription = AppLanguage.tr("直近のメッセージを再送信", activity)
+                        setColorFilter(Color.WHITE)
+                        setBackgroundResourceSelectableBorderless()
+                        isEnabled = true
+                        setPadding(dp(3f), dp(3f), dp(3f), dp(3f))
+                        scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
+                        setOnClickListener { retryLastPrepMessage() }
+                    }
+                    meta.addView(retry, LinearLayout.LayoutParams(dp(30f), dp(30f)).apply {
+                        marginStart = dp(4f)
+                    })
+                }
+            } else {
+                meta.addView(time, LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { gravity = Gravity.CENTER_VERTICAL })
+            }
+            bubble.addView(meta, LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            lp.bottomMargin = pad / 2
-            container.addView(tv, lp)
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(2f) })
+
+            messageColumn.addView(bubble, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { gravity = side })
+            container.addView(messageColumn, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(6f) })
         }
         scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
+    }
+
+    /** テーマのボーダーレス選択背景をImageButtonに設定する。 */
+    private fun ImageButton.setBackgroundResourceSelectableBorderless() {
+        val value = TypedValue()
+        if (activity.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, value, true)) {
+            if (value.resourceId != 0) setBackgroundResource(value.resourceId)
+            else setBackgroundColor(value.data)
+        }
     }
 
     private fun sendPrepMessage() {
@@ -192,20 +327,64 @@ class PrepTabController(
             return
         }
         et.setText("")
+        clearPrepRetry()
         PrepChatStore.add(PrepChatStore.USER, text)
+        // 送信時点の会話を固定しておき、失敗時は同じ内容を再送できるようにする。
+        runPrepRequest(text, key, PrepChatStore.toApiContents(), systemInstructionOverride = null)
+    }
+
+    private fun retryLastPrepMessage() {
+        if (prepBusy) return
+        val text = retryPrepText ?: return
+        val contentsJson = retryPrepContentsJson ?: return
+        val key = apiKey()
+        if (key.isBlank()) {
+            setPrepStatus("先に設定タブで API キーを保存してください")
+            return
+        }
+        val contents = try {
+            org.json.JSONArray(contentsJson)
+        } catch (e: org.json.JSONException) {
+            setPrepStatus("再送する会話データを読み込めません。もう一度メッセージを送信してください")
+            clearPrepRetry()
+            return
+        }
+        runPrepRequest(text, key, contents, systemInstructionOverride = retryPrepSystemInstruction)
+    }
+
+    private fun clearPrepRetry() {
+        retryPrepText = null
+        retryPrepContentsJson = null
+        retryPrepSystemInstruction = null
+        retryPrepMessage = null
+        renderPrepChat()
+    }
+
+    private fun runPrepRequest(
+        requestText: String,
+        key: String,
+        contents: org.json.JSONArray,
+        systemInstructionOverride: String?,
+    ) {
+        if (prepBusy) return
         prepBusy = true
+        renderPrepChat()
         val languageCode = AppLanguage.resolvedCode(activity)
         val maxAtt = GemmaClient.maxAttemptsFromPrefs(prefs)
         setPrepLoading(true, "Gemma にリクエスト中…（応答待ち・最大${maxAtt}回まで自動リトライ）")
         setPrepStatus("Gemma 応答待ち…")
         activity.lifecycleScope.launch(Dispatchers.IO) {
-            val labels = PersonalInfo.registeredLabels(prefs, languageCode)
-            val customPrompt = prefs.getString(AiCallService.KEY_GEMMA_CHAT_PROMPT, null)
-            val sys = GemmaClient.chatSystemInstruction(labels, customPrompt, languageCode)
+            val sys = systemInstructionOverride ?: run {
+                val labels = PersonalInfo.registeredLabels(prefs, languageCode)
+                val customPrompt = prefs.getString(AiCallService.KEY_GEMMA_CHAT_PROMPT, null)
+                GemmaClient.chatSystemInstruction(labels, customPrompt, languageCode)
+            }
+            // JSONArrayを文字列として退避し、ライブラリ側で変更されても再送内容が変わらないようにする。
+            val contentsJson = contents.toString()
             val result = GemmaClient.generate(
                 apiKey = key,
                 systemInstruction = sys,
-                contents = PrepChatStore.toApiContents(),
+                contents = org.json.JSONArray(contentsJson),
                 enableSearch = true,
                 jsonMode = false,
                 thinkingLevel = GemmaClient.thinkingFromPrefs(prefs),
@@ -215,9 +394,17 @@ class PrepTabController(
                 prepBusy = false
                 setPrepLoading(false)
                 if (!result.ok) {
+                    retryPrepText = requestText
+                    retryPrepContentsJson = contentsJson
+                    retryPrepSystemInstruction = sys
+                    retryPrepMessage = PrepChatStore.messages.lastOrNull {
+                        it.role == PrepChatStore.USER && it.text == requestText
+                    }
+                    renderPrepChat()
                     setPrepStatus(result.error)
                     PrepChatStore.add(PrepChatStore.SYSTEM, "Gemma失敗: ${result.error}")
                 } else {
+                    clearPrepRetry()
                     var reply = result.text
                     if (result.sources.isNotEmpty()) {
                         val src = result.sources.take(5).joinToString("\n") { (title, uri) -> "・$title — $uri" }
@@ -250,6 +437,8 @@ class PrepTabController(
             setPrepStatus("先に用件を送信してください")
             return
         }
+        // 「まとめる」は別のリクエストなので、以前のチャット再送状態は解除する。
+        clearPrepRetry()
         prepBusy = true
         val languageCode = AppLanguage.resolvedCode(activity)
         val maxAtt = GemmaClient.maxAttemptsFromPrefs(prefs)
