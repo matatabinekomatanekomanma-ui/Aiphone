@@ -48,17 +48,8 @@ class GeminiLiveSession(
         const val MODEL = "gemini-3.8-live"
         const val TOOL_REQUEST_PII = "request_personal_info"
 
-        /** 声だけの電話を前提にした短いプロンプト。個人情報は入れない */
-        const val DEFAULT_PROMPT =
-            "あなたは本人の代わりに電話をかけているアシスタントです。声だけの会話です。\n" +
-            "・話し言葉で、1回に1〜2文だけ短く話す。\n" +
-            "・あなたは本人の代理で、本人の用件だけを話す。注意書き・免責・一般的なアドバイスは言わない。\n" +
-            "・用件が指示に書かれているときだけ、それを伝える。無いときは自分で作らない。\n" +
-            "・分からない・知らない・迷うときは、推測で答えず本人に確認する(下記ルールに従う)。\n" +
-            "・用件が済んだらお礼を言って終わる。"
-
         /** 直前の既定(「もしもし」「相手が話し終えてから」を含む版)。保存されていたら新しい既定へ置き換える */
-        private val V3_DEFAULT_PROMPT =
+        private const val V3_DEFAULT_PROMPT =
             "あなたは本人の代わりに電話をかけているアシスタントです。声だけの会話です。\n" +
             "・話し言葉で、1回に1〜2文だけ短く話す。\n" +
             "・相手が出たら、最初に「もしもし」とだけ言って、相手の返事を待つ。\n" +
@@ -254,8 +245,8 @@ class GeminiLiveSession(
                 return
             }
             // interactionStatus は root または serverContent に付くことがある
-            val interactionStatus = root.optString("interactionStatus", null)
-                ?: root.optJSONObject("serverContent")?.optString("interactionStatus", null)
+            val interactionStatus = root.optString("interactionStatus", "").ifEmpty { null }
+                ?: root.optJSONObject("serverContent")?.optString("interactionStatus", "")?.ifEmpty { null }
             if (!interactionStatus.isNullOrEmpty()) {
                 onLog("Gemini interactionStatus=$interactionStatus")
             }

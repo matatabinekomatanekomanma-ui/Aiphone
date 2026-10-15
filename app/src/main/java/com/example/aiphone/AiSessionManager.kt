@@ -25,6 +25,8 @@ object AiSessionManager {
     private const val CAPTURE_VARIANT = 5
     private const val INJECT_VARIANT = 0
     private const val CAP_RATE = 48000
+    private const val PREBUFFER_BYTES = 14400 // AI の声: 発話の頭で 150ms(48kHz s16le mono)ためてから注入を始める
+    private const val PREBUFFER_MAX_WAIT_MS = 200L
     private const val GEMINI_IN_RATE = 16000
     @Volatile private var appCtx: Context? = null
     /** イヤホンマイク(Bluetooth / 有線)の着脱に合わせて、再生の出力機器を指定し直す */
@@ -108,6 +110,8 @@ object AiSessionManager {
         AskUserStore.clear()
         lastToolCallAt = 0L; waitSaidAt = 0L; synchronized(aiTurnText) { aiTurnText.setLength(0) }
 
+        // 録音が自前で持っている取得を手放す(同時に 1 つしか持てないため)
+        CallRecorder.releaseForSession()
         log("AI通話開始: 取得=F / 注入=A / model=${GeminiLiveSession.MODEL}")
         setStatus("AI通話開始中...")
         running.set(true)
@@ -229,6 +233,7 @@ object AiSessionManager {
                                 val n = ins.read(buf)
                                 if (n < 0) break
                                 if (n > 0) {
+                                    CallRecorder.feedPeer(buf, 0, n)
                                     // 準備前の音声も間引き状態(持ち越し)を進めるため必ず通す
                                     val pcm16 = down.process(buf, n)
                                     gemini?.let { g -> if (g.isReady()) g.sendAudioPcm(pcm16, GEMINI_IN_RATE) }
@@ -258,9 +263,22 @@ object AiSessionManager {
                     try {
                         FileOutputStream(pipeInj[1].fileDescriptor).use { os ->
                             while (running.get()) {
-                                val pcm = injectQueue.poll(200, TimeUnit.MILLISECONDS)
+                                var pcm = injectQueue.poll(200, TimeUnit.MILLISECONDS)
                                 if (pcm == null) { nextAt = 0L; continue }
                                 val epoch = interruptEpoch.get()
+                                if (nextAt == 0L && pcm.size < PREBUFFER_BYTES) {
+                                    // 発話の頭: 受信が細切れに届くと、送り出しが追いつかず途切れる。少したまるのを待ってから流し始める
+                                    val acc = java.io.ByteArrayOutputStream(PREBUFFER_BYTES * 2)
+                                    acc.write(pcm)
+                                    val deadline = System.nanoTime() + PREBUFFER_MAX_WAIT_MS * 1_000_000L
+                                    while (acc.size() < PREBUFFER_BYTES && running.get() && epoch == interruptEpoch.get()) {
+                                        val rem = deadline - System.nanoTime()
+                                        if (rem <= 0) break
+                                        val more = injectQueue.poll(rem, TimeUnit.NANOSECONDS) ?: break
+                                        acc.write(more)
+                                    }
+                                    pcm = acc.toByteArray()
+                                }
                                 var off = 0
                                 while (off < pcm.size && running.get() && epoch == interruptEpoch.get()) {
                                     val n = minOf(chunk, pcm.size - off)
@@ -269,6 +287,7 @@ object AiSessionManager {
                                     val waitNs = nextAt - now - leadNs
                                     if (waitNs > 0) Thread.sleep(waitNs / 1_000_000L, (waitNs % 1_000_000L).toInt())
                                     os.write(pcm, off, n)
+                                    CallRecorder.feedMine(pcm, off, n)
                                     nextAt += n / 2L * 1_000_000_000L / CAP_RATE
                                     off += n
                                 }

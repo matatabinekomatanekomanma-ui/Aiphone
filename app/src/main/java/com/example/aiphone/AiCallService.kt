@@ -43,6 +43,21 @@ class AiCallService : Service() {
         const val KEY_CLEAR_ARM_ON_END = "clear_arm_on_call_end"
         /** 通話終了後にセットした用件を一覧から削除する（既定 false） */
         const val KEY_DELETE_BRIEF_ON_END = "delete_brief_on_call_end"
+        /** 通話内容を録音する(既定 ON) */
+        const val KEY_RECORD_CALLS = "record_calls"
+        /** 録音の音量(%。50〜200、100 が元の大きさ)。旧版(100〜300、200 が元の大きさ)の値は引き継ぐ */
+        const val KEY_RECORD_GAIN = "record_gain_pct"
+        const val KEY_RECORD_GAIN_V2 = "record_gain_pct_v2"
+        const val DEFAULT_RECORD_GAIN = 100
+
+        fun recordGain(prefs: android.content.SharedPreferences): Int {
+            if (prefs.contains(KEY_RECORD_GAIN_V2)) return prefs.getInt(KEY_RECORD_GAIN_V2, DEFAULT_RECORD_GAIN).coerceIn(CallRecorder.MIN_GAIN, CallRecorder.MAX_GAIN)
+            if (prefs.contains(KEY_RECORD_GAIN)) {
+                val old = prefs.getInt(KEY_RECORD_GAIN, 200)
+                return (Math.round(old / 20.0) * 10).toInt().coerceIn(CallRecorder.MIN_GAIN, CallRecorder.MAX_GAIN)
+            }
+            return DEFAULT_RECORD_GAIN
+        }
         const val KEY_PROMPT = "gemini_prompt"
         const val KEY_VOICE = "gemini_voice"
         const val KEY_TEST_LINE = "gemini_test_line"
@@ -177,6 +192,11 @@ class AiCallService : Service() {
             CallBriefStore.isActive() -> startAi()
             else -> Log.i(TAG, "セットなし: AI は自動起動しません")
         }
+        // 通話の録音(AI・翻訳の有無にかかわらず。AI・翻訳の開始後に呼ぶので、取得・マイクの持ち主が決まっている)
+        if (getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_RECORD_CALLS, true)) {
+            CallRecorder.gainPercent = recordGain(getSharedPreferences(PREFS, MODE_PRIVATE))
+            CallRecorder.start(applicationContext)
+        }
     }
 
     /** 重ねて表示の「AI ON」: 何もセットしていない状態の AI を、いま起動する。開始できなければ理由を返す */
@@ -191,6 +211,7 @@ class AiCallService : Service() {
 
     private fun onCallIdle() {
         callActive = false
+        CallRecorder.stop()
         if (AiSessionManager.running.get()) {
             AiSessionManager.stop()
         }

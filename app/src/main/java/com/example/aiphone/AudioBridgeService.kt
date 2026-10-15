@@ -229,7 +229,7 @@ class AudioBridgeService : IAudioBridge.Stub {
         sb.appendLine("process uid=${Process.myUid()} sdk=${Build.VERSION.SDK_INT} (${Build.VERSION.RELEASE}) ${Build.MANUFACTURER} ${Build.MODEL}")
         sb.appendLine("target uid=$targetUid")
         for (n in listOf("AudioPolicy", "AudioMix", "AudioMixingRule", "AudioPolicyConfig")) {
-            sb.appendLine("class $n: " + try { Class.forName(pkg + n); "OK" } catch (e: Throwable) { "NG" })
+            sb.appendLine("class $n: " + try { Class.forName(pkg + n); "OK" } catch (_: Throwable) { "NG" })
         }
         try {
             val rc = Class.forName(pkg + "AudioMixingRule")
@@ -696,6 +696,7 @@ class AudioBridgeService : IAudioBridge.Stub {
     }
 
     // ---------- shell プロセスを「アプリっぽく」する(AudioRecord の attribution 対策) ----------
+    @Suppress("DEPRECATION")
     private fun prepareEnv(): Context {
         val at = step("Class ActivityThread") { Class.forName("android.app.ActivityThread") }
         try { Looper.prepareMainLooper(); t("Looper.prepareMainLooper OK") } catch (e: Throwable) { t("Looper.prepareMainLooper 例外(無視): ${err(e)}") }

@@ -21,6 +21,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.CheckBox
 import android.widget.EditText
@@ -75,6 +76,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etApiKey: EditText
     private lateinit var cbClearArmOnEnd: CheckBox
     private lateinit var cbDeleteBriefOnEnd: CheckBox
+    private lateinit var cbRecordCalls: CheckBox
     private lateinit var prefs: SharedPreferences
     /** 暗号化済み API キーを復号できなかった場合、空欄のまま保存して既存値を消さない。 */
     private var apiKeyReadFailed = false
@@ -144,6 +146,7 @@ class MainActivity : AppCompatActivity() {
         etApiKey = findViewById(R.id.etApiKey)
         cbClearArmOnEnd = findViewById(R.id.cbClearArmOnEnd)
         cbDeleteBriefOnEnd = findViewById(R.id.cbDeleteBriefOnEnd)
+        cbRecordCalls = findViewById(R.id.cbRecordCalls)
         tabs = findViewById(R.id.tabs)
         spVoice = findViewById(R.id.spVoice)
         spVadStart = findViewById(R.id.spVadStart)
@@ -276,15 +279,11 @@ class MainActivity : AppCompatActivity() {
         }
         cbClearArmOnEnd.isChecked = prefs.getBoolean(AiCallService.KEY_CLEAR_ARM_ON_END, true)
         cbDeleteBriefOnEnd.isChecked = prefs.getBoolean(AiCallService.KEY_DELETE_BRIEF_ON_END, false)
+        cbRecordCalls.isChecked = prefs.getBoolean(AiCallService.KEY_RECORD_CALLS, true)
 
         AiSessionManager.onStatus = { s -> setStatus(s) }
 
         findViewById<Button>(R.id.btnConnect).setOnClickListener { onStartPairingClicked() }
-        findViewById<Button>(R.id.btnDiag).setOnClickListener {
-            val s = BridgeConnector.bridge ?: return@setOnClickListener log("先に priv-kit 接続を完了してください")
-            val uid = AiSessionManager.targetUid(this) ?: return@setOnClickListener
-            lifecycleScope.launch(Dispatchers.IO) { log(s.diagnose(uid)) }
-        }
         aiSwitch.setOnCheckedChangeListener { _, checked ->
             if (aiSwitchSyncing) return@setOnCheckedChangeListener
             if (checked) startAiFromSwitch() else AiSessionManager.stop()
@@ -301,6 +300,23 @@ class MainActivity : AppCompatActivity() {
         cbDeleteBriefOnEnd.setOnCheckedChangeListener { _, checked ->
             prefs.edit { putBoolean(AiCallService.KEY_DELETE_BRIEF_ON_END, checked) }
         }
+        cbRecordCalls.setOnCheckedChangeListener { _, checked ->
+            prefs.edit { putBoolean(AiCallService.KEY_RECORD_CALLS, checked) }
+        }
+        val sbGain = findViewById<SeekBar>(R.id.sbRecordGain)
+        val tvGain = findViewById<TextView>(R.id.tvRecordGain)
+        val savedGain = AiCallService.recordGain(prefs)
+        sbGain.progress = (savedGain - CallRecorder.MIN_GAIN) / 10
+        tvGain.text = "${CallRecorder.MIN_GAIN + sbGain.progress * 10}%"
+        sbGain.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: SeekBar, progress: Int, fromUser: Boolean) {
+                val pct = CallRecorder.MIN_GAIN + progress * 10
+                tvGain.text = "$pct%"
+                if (fromUser) prefs.edit { putInt(AiCallService.KEY_RECORD_GAIN_V2, pct) }
+            }
+            override fun onStartTrackingTouch(sb: SeekBar) {}
+            override fun onStopTrackingTouch(sb: SeekBar) {}
+        })
 
         setupSettingsSections()
         val cbHear = findViewById<CheckBox>(R.id.cbTrHearOriginal)
@@ -744,6 +760,7 @@ class MainActivity : AppCompatActivity() {
         prefs.edit {
             putBoolean(AiCallService.KEY_CLEAR_ARM_ON_END, cbClearArmOnEnd.isChecked)
             putBoolean(AiCallService.KEY_DELETE_BRIEF_ON_END, cbDeleteBriefOnEnd.isChecked)
+            putBoolean(AiCallService.KEY_RECORD_CALLS, cbRecordCalls.isChecked)
             // 既定のままなら空で保存し、将来の既定プロンプト更新に追従させる
             putString(AiCallService.KEY_PROMPT, etPrompt.text.toString().let {
                 if (GeminiLiveSession.isLegacyDefault(it) || it.isBlank()) "" else it

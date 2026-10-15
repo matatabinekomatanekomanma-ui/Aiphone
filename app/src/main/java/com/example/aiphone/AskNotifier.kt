@@ -86,6 +86,7 @@ object AskNotifier {
         )
     }
 
+    @Suppress("DEPRECATION")
     private fun vibrate(ctx: Context) {
         try {
             val effect = VibrationEffect.createWaveform(longArrayOf(0, 180, 120, 180, 120, 400), -1)

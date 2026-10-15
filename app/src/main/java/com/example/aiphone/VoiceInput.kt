@@ -16,12 +16,12 @@ class VoiceInput(
     private val onText: (text: String, isFinal: Boolean) -> Unit,
     private val onState: (String) -> Unit,
     /** 成功・失敗・中止のどれでも、聞き取りが終わったら呼ぶ */
-    private val onEnd: () -> Unit
+    private val onEnd: () -> Unit,
 ) {
     private var recognizer: SpeechRecognizer? = null
     private var priv: PrivMicTranscriber? = null
     private var stdListening = false
-    val listening: Boolean get() = stdListening || priv?.listening == true
+    val listening: Boolean get() = stdListening || (priv?.listening == true)
 
     /** 通話中(通話アプリがマイクを使っている間)か。このときは通常の音声認識が無音化される */
     private fun inCall(): Boolean = try {

@@ -69,6 +69,13 @@ object TranslateManager {
     @Volatile private var chOut: Channel? = null  // 自分→相手
 
     private val injectQueue = LinkedBlockingQueue<ByteArray>()
+
+    /** 録音(CallRecorder)用: いま翻訳が相手の声の取得を使っているか */
+    @Volatile var usesCapture = false
+        private set
+    /** 録音(CallRecorder)用: いま翻訳が自分のマイクを使っているか(使っていれば、相手に届くのは翻訳後の声) */
+    @Volatile var usesMic = false
+        private set
     @Volatile private var player: LocalPcmPlayer? = null
     /** 元の声を消している間、翻訳が未準備のときだけ原音(48k)を流す安全網 */
     @Volatile private var passPlayer: LocalPcmPlayer? = null
@@ -215,6 +222,10 @@ object TranslateManager {
         if (inCh != null) connectChannel(inCh)
         if (outCh != null) connectChannel(outCh)
 
+        usesCapture = needIn
+        usesMic = outgoing
+        // 録音が自前で持っている取得・マイクを手放す(同時に 1 つしか持てないため)
+        CallRecorder.releaseForSession()
         Thread({ startAudioPaths(bridge, appCtx, muteOriginal, needIn, outgoing) }, "tr-start").start()
         return true
     }
@@ -227,6 +238,8 @@ object TranslateManager {
     @Synchronized
     private fun shutdown(finalStatus: String) {
         if (!running.getAndSet(false)) return
+        usesCapture = false
+        usesMic = false
         log("翻訳停止中... ($finalStatus)")
         setStatus("停止中...")
         TranslateStore.add("— 翻訳終了 —")
@@ -489,6 +502,7 @@ object TranslateManager {
                                     if (n > 0) {
                                         val even = align.feed(buf, n)
                                         if (even.isEmpty()) continue
+                                        CallRecorder.feedPeer(even, 0, even.size)
                                         val g = chIn?.session
                                         if (g != null && g.isReady()) {
                                             val pcm16 = down.process(even, even.size)
@@ -527,6 +541,7 @@ object TranslateManager {
                                         val waitNs = nextAt - now - leadNs
                                         if (waitNs > 0) Thread.sleep(waitNs / 1_000_000L, (waitNs % 1_000_000L).toInt())
                                         os.write(pcm, off, n)
+                                        CallRecorder.feedMine(pcm, off, n)
                                         injectedBytes += n
                                         nextAt += n / 2L * 1_000_000_000L / CAP_RATE
                                         off += n

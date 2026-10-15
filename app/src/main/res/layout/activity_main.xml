@@ -885,12 +885,67 @@
                     android:textSize="12sp"
                     android:textColor="@color/sub_text" />
 
-                <Button
-                    android:id="@+id/btnDiag"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="診断（priv-kit 経由）" />
+                    android:layout_marginTop="16dp"
+                    android:text="通話の録音"
+                    android:textSize="15sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+
+                <CheckBox
+                    android:id="@+id/cbRecordCalls"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:checked="true"
+                    android:text="通話内容を録音する"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="相手の声と、相手に届く側の声（AI・翻訳の声を含む。AI・翻訳を使わないときは自分の声）を、M4A で「音楽」フォルダ（Music/Aiphone）に保存します。通話の録音には、相手の同意が必要な場合があります。音楽ファイルへのアクセスを許可した他のアプリから、保存した録音が見える場合があります。"
+                    android:textSize="12sp"
+                    android:textColor="@color/sub_text" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="録音音量"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/tvRecordGain"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="100%"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <SeekBar
+                    android:id="@+id/sbRecordGain"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="15"
+                    android:progress="5" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="50%〜200%（10%刻み、100% が元の大きさ）。録音ファイルにだけ反映され、通話中の音には影響しません。大きすぎる音は自動で抑えます。音が小さい場合は少しずつ上げてください。"
+                    android:textSize="12sp"
+                    android:textColor="@color/sub_text" />
             
                 </LinearLayout>
                 <TextView

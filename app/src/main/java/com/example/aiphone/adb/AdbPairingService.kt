@@ -229,6 +229,7 @@ class AdbPairingService : Service() {
             if (searching) resolveNext(manager)
         }
         try {
+            @Suppress("DEPRECATION")
             manager.resolveService(
                 info,
                 object : NsdManager.ResolveListener {
@@ -380,7 +381,10 @@ class AdbPairingService : Service() {
             // 検索→入力の切替でヘッドアップさせるため onlyAlertOnce は付けない
             .setCategory(Notification.CATEGORY_MESSAGE)
             .setVisibility(Notification.VISIBILITY_PUBLIC)
-            .setDefaults(Notification.DEFAULT_VIBRATE)
+            .apply {
+                @Suppress("DEPRECATION")
+                setDefaults(Notification.DEFAULT_VIBRATE)
+            }
             .addAction(replyAction)
             .addAction(stopNotificationAction())
             .build()

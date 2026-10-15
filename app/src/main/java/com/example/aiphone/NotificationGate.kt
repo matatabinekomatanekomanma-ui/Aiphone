@@ -10,6 +10,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
+import androidx.core.net.toUri
 
 /**
  * 「通知が使えること」を確かめてから [onReady] を実行する。
@@ -54,7 +56,7 @@ class NotificationGate(
         activity.getSharedPreferences(PREFS, AppCompatActivity.MODE_PRIVATE).getBoolean(KEY_ASKED, false)
 
     private fun markAsked() {
-        activity.getSharedPreferences(PREFS, AppCompatActivity.MODE_PRIVATE).edit().putBoolean(KEY_ASKED, true).apply()
+        activity.getSharedPreferences(PREFS, AppCompatActivity.MODE_PRIVATE).edit { putBoolean(KEY_ASKED, true) }
     }
 
     private fun showDialog() {
@@ -97,7 +99,7 @@ class NotificationGate(
             try {
                 activity.startActivity(
                     Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                        .setData(android.net.Uri.parse("package:${activity.packageName}"))
+                        .setData("package:${activity.packageName}".toUri())
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 )
             } catch (_: Exception) {

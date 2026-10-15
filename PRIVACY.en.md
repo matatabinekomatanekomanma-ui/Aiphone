@@ -41,6 +41,15 @@ Google's Gemini API Additional Terms explain that inputs and outputs from free s
 
 Before handing your device to someone else, check for stored information and API keys and clear app data if appropriate. Uninstalling normally deletes private app data, but this does not guarantee deletion of every backup or system-side copy.
 
+### Call recording
+
+When "Record call audio" is turned on in Settings (on by default), every call is recorded and saved as an M4A file in the shared Music folder of the device (`Music/Aiphone/`). The recording contains the other party's voice and the voice that reaches them (including AI/translation voice; your own voice when neither is used).
+
+- Recordings are not sent to the developer's servers. They are stored only on the device.
+- Because they are saved in the shared Music folder, other apps that are allowed to access music files, and backup or sync services, may be able to see them. Delete recordings you no longer need with a file manager.
+- To record, the app captures the call app's playback through privileged access (priv-kit) during the call, and also records your microphone when AI/translation is not in use.
+- Recording a call may require the other party's consent. You are responsible for the legality of recording and for informing the other party.
+
 ### Call-direction diagnostic logs
 
 When call direction is unknown, diagnostic logs may include AudioManager mode, audio recording/playback configuration, audio-device types, supported VoIP app package names and UIDs, and visible process information. If the user grants Android Usage Access, recent usage events and timestamps for supported VoIP apps may also be logged. These diagnostic logs do not intentionally include audio content, phone numbers, contacts, or API keys. Logs remain in Android Logcat and may be exposed if collected or shared through ADB; review them before sharing.

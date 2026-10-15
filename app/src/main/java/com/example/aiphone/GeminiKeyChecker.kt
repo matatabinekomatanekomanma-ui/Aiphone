@@ -28,7 +28,7 @@ object GeminiKeyChecker {
      */
     fun clean(raw: String): String {
         val normalized = java.text.Normalizer.normalize(raw, java.text.Normalizer.Form.NFKC)
-        return normalized.filter { it in 'A'..'Z' || it in 'a'..'z' || it in '0'..'9' || it == '_' || it == '-' || it == '.' }
+        return normalized.filter { (it in 'A'..'Z') || (it in 'a'..'z') || (it in '0'..'9') || it == '_' || it == '-' || it == '.' }
     }
 
     /** ok: true=有効 / false=無効 / null=ネットワーク等で判定不能 */
@@ -72,7 +72,7 @@ object GeminiKeyChecker {
 
     /** ブロッキング。必ずバックグラウンドスレッドから呼ぶ。 */
     fun check(apiKey: String, timeoutMs: Long = 12000): Result {
-        if (apiKey.isBlank()) return Result(false, "キーが未入力です")
+        if (apiKey.isBlank()) return Result(ok = false, message = "キーが未入力です")
         // 共有クライアントの接続プール/スレッドを使い回す（shutdown はしない）
         val client = Http.client.newBuilder()
             .connectTimeout(8, TimeUnit.SECONDS)

@@ -30,7 +30,7 @@ object VoiceTester {
     fun start(
         apiKey: String, prompt: String, voice: String, testLine: String,
         onText: (String) -> Unit, onState: (String) -> Unit, onFinished: () -> Unit,
-        languageCode: String = "ja"
+        languageCode: String = "ja",
     ) {
         if (running.get()) return
         running.set(true)
