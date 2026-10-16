@@ -1069,6 +1069,21 @@
                     app:useMaterialThemeColors="false" />
             </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="end|center_vertical"
+                android:orientation="horizontal"
+                android:paddingTop="2dp">
+
+                <Button
+                    android:id="@+id/btnCallClearHistory"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minHeight="36dp"
+                    android:text="履歴クリア" />
+            </LinearLayout>
+
             <ScrollView
                 android:id="@+id/chatScroll"
                 android:layout_width="match_parent"

@@ -177,6 +177,7 @@ class MainActivity : AppCompatActivity() {
         tvVoiceText = findViewById(R.id.tvVoiceText)
         btnVoiceTest = findViewById(R.id.btnVoiceTest)
         chatView = ChatView(this, findViewById(R.id.chatScroll), findViewById<LinearLayout>(R.id.chatContainer))
+        setupCallHistoryClearButton()
         askCard = AskCardController(this, REQ_MIC).also { it.setup() }
 
         spVoice.adapter = ArrayAdapter(
@@ -604,6 +605,25 @@ class MainActivity : AppCompatActivity() {
             }
             log("Gemini キー確認: ${r.message}")
             refreshStatus()
+        }
+    }
+
+    /** 通話タブに表示される会話履歴を、確認後に消去する。通話自体は停止しない。 */
+    private fun setupCallHistoryClearButton() {
+        findViewById<Button>(R.id.btnCallClearHistory).setOnClickListener {
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(AppLanguage.tr("履歴クリア", this))
+                .setMessage(AppLanguage.tr("通話タブの会話履歴を削除しますか？この操作は取り消せません。", this))
+                .setNegativeButton(AppLanguage.tr("キャンセル", this), null)
+                .setPositiveButton(AppLanguage.tr("削除", this)) { _, _ ->
+                    ChatStore.clear()
+                    Toast.makeText(
+                        this,
+                        AppLanguage.tr("履歴をクリアしました", this),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                .show()
         }
     }
 

@@ -188,7 +188,9 @@ class GeminiLiveSession(
                 })
                 put("systemInstruction", JSONObject().apply {
                     val body = if (enableAskUser) configuredInstruction + PromptLocalization.askUserGuide(languageCode) else configuredInstruction
-                    val full = PromptLocalization.speakingLanguageRule(languageCode) + body
+                    // Apply this policy after user prompts and tool guidance, including when a custom prompt is configured.
+                    val full = PromptLocalization.speakingLanguageRule(languageCode) + body +
+                        PromptLocalization.oneItemPerTurnRule(languageCode)
                     put("parts", JSONArray().put(JSONObject().put("text", full)))
                 })
                 // 音声検出(VAD): 設定画面の値

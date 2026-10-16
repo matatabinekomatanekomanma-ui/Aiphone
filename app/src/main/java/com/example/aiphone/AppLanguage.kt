@@ -234,6 +234,8 @@ object AppLanguage {
         Row("用件・相手・聞きたいことなど", "Purpose, contact, questions, etc.", "事项、联系人、想询问的内容等", "事項、聯絡人、想詢問的內容等", "용건, 상대방, 물어볼 내용 등", "Motivo, contacto, preguntas, etc."),
         Row("まとめる", "Organize", "整理", "整理", "정리", "Organizar"),
         Row("履歴クリア", "Clear history", "清除记录", "清除紀錄", "기록 지우기", "Borrar historial"),
+        Row("通話タブの会話履歴を削除しますか？この操作は取り消せません。", "Delete the conversation history shown on the Call tab? This action cannot be undone.", "要删除通话标签页中显示的对话记录吗？此操作无法撤销。", "要刪除通話分頁中顯示的對話紀錄嗎？此操作無法復原。", "통화 탭에 표시된 대화 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.", "¿Eliminar el historial de conversación de la pestaña Llamada? Esta acción no se puede deshacer."),
+        Row("削除", "Delete", "删除", "刪除", "삭제", "Eliminar"),
         Row("まとめ（編集してからセット）", "Summary (edit before setting)", "摘要（编辑后再设置）", "摘要（編輯後再設定）", "요약(편집한 뒤 설정)", "Resumen (edita antes de configurar)"),
         Row("発信先の名前", "Recipient name", "拨打对象姓名", "撥打對象姓名", "전화 상대 이름", "Nombre del destinatario"),
         Row("用件（1〜2文）", "Purpose (1–2 sentences)", "事项（1–2 句话）", "事項（1–2 句）", "용건(1~2문장)", "Motivo (1–2 frases)"),

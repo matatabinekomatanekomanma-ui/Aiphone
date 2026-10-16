@@ -236,7 +236,8 @@ object GemmaClient {
     fun isDefaultSummaryPrompt(prompt: String): Boolean {
         val candidate = prompt.trim()
         return listOf("ja", "en", "zh-CN", "zh-TW", "ko", "es")
-            .any { candidate == defaultSummaryPrompt(it).trim() }
+            .any { candidate == defaultSummaryPrompt(it).trim() } ||
+            PromptLocalization.isLegacyGemmaSummaryDefault(candidate)
     }
 
     /**

@@ -77,6 +77,64 @@ object PromptLocalization {
 - When the purpose is complete, thank the other party and end the call."""
     }
 
+    /** Mandatory turn-taking policy appended after both default and user-custom phone prompts. */
+    fun oneItemPerTurnRule(code: String): String = when (normalizeCode(code)) {
+        "ja" -> """
+
+【最優先の会話進行ルール：1回に1要件だけ】
+通話用件ブロックは伝えるべき事項の一覧であり、一度に読み上げる文章ではありません。
+各発話で伝える情報・依頼・質問は、必ず1つだけにしてください。短い1文で話し、別の要件を同じ発話に追加してはいけません。複数の要件を列挙したり、接続詞で続けたり、次の要件を先回りして伝えたりしないでください。
+1つ伝えたら、必ず話すのを止め、相手の返答を待ってください。相手の返答を受けて内容を判断してから、次の要件を1つだけ伝えてください。
+伝えるべき事項が複数あっても、一度の発話にまとめず、会話の複数ターンに分けて順番に伝えてください。
+発話前に「この発話には要件が1つだけか」を確認し、複数なら最重要の1つだけに絞ってください。
+        """.trimIndent()
+        "zh-CN" -> """
+
+【最高优先级的对话规则：每次只传达一项】
+通话事项区块是需要传达的事项清单，不是一次性朗读的全文。
+每次发言必须只传达一项信息、请求或问题。用简短的一句话表达，不得在同一次发言中添加其他事项。不得罗列多项内容、用连接词继续补充其他要求，或提前说出下一项内容。
+传达一项后，必须停止说话并等待对方回应。收到对方回应并理解其内容后，再传达下一项。
+即使需要传达多项内容，也必须按顺序拆分到多个对话轮次中，不得一次说完。
+每次开口前，检查本次发言是否只有一项；如果包含多项，只保留最重要的一项。
+        """.trimIndent()
+        "zh-TW" -> """
+
+【最高優先級的對話規則：每次只傳達一項】
+通話事項區塊是需要傳達的事項清單，不是一次朗讀的全文。
+每次發言必須只傳達一項資訊、請求或問題。使用簡短的一句話表達，不得在同一次發言中加入其他事項。不得列出多項內容、用連接詞繼續補充其他要求，或提前說出下一項內容。
+傳達一項後，必須停止說話並等待對方回應。收到對方回應並理解其內容後，再傳達下一項。
+即使需要傳達多項內容，也必須依序拆分到多個對話輪次中，不得一次說完。
+每次開口前，檢查本次發言是否只有一項；若包含多項，只保留最重要的一項。
+        """.trimIndent()
+        "ko" -> """
+
+【최우선 대화 규칙: 한 번에 한 가지 용건만 전달】
+통화 용건 블록은 전달해야 할 항목 목록이지, 한 번에 모두 읽어야 하는 문장이 아닙니다.
+매 발화에서는 정보, 요청 또는 질문을 반드시 한 가지만 전달합니다. 짧은 한 문장으로 말하고 같은 발화에 다른 용건을 추가하지 않습니다. 여러 항목을 나열하거나 연결어로 다른 요청을 덧붙이거나 다음 항목을 미리 말하지 않습니다.
+한 가지를 전달한 뒤에는 반드시 말을 멈추고 상대방의 답변을 기다립니다. 답변을 듣고 내용을 파악한 다음에만 다음 용건 한 가지를 전달합니다.
+전달할 내용이 여러 개여도 한 번에 말하지 말고 여러 대화 차례로 나누어 순서대로 전달합니다.
+말하기 전에 이번 발화에 용건이 하나만 있는지 확인하고, 여러 개라면 가장 중요한 하나만 남깁니다.
+        """.trimIndent()
+        "es" -> """
+
+【Regla de conversación prioritaria: comunicar un solo asunto por turno】
+El bloque de instrucciones de la llamada es una lista de asuntos que deben comunicarse, no un texto para leer de una sola vez.
+En cada intervención, comunica exactamente una información, petición o pregunta. Usa una sola frase breve y no añadas otro asunto en la misma intervención. No enumeres varios puntos, no agregues otras solicitudes mediante conectores ni adelantes el siguiente asunto.
+Después de comunicar un asunto, deja de hablar y espera la respuesta de la otra persona. Solo después de escuchar y comprender su respuesta, comunica el siguiente asunto.
+Aunque haya varios asuntos pendientes, divídelos en varios turnos de conversación y comunícalos en orden; no los digas todos de una vez.
+Antes de hablar, comprueba que la intervención contiene un solo asunto; si contiene varios, conserva únicamente el más importante.
+        """.trimIndent()
+        else -> """
+
+[Highest-priority conversation rule: communicate only one item per turn]
+The call-brief block is a checklist of items to communicate, not a script to read all at once.
+In each spoken turn, communicate exactly one piece of information, request, or question. Use one short sentence and do not add another item in the same turn. Do not list multiple items, append extra requests with connecting phrases, or get ahead by stating the next item.
+After communicating one item, stop speaking and wait for the other person's response. Only after hearing and understanding that response may you communicate the next item.
+Even when several items must be communicated, split them across multiple conversation turns and communicate them in order; never say them all at once.
+Before speaking, check that the turn contains only one item. If it contains more than one, keep only the most important one.
+        """.trimIndent()
+    }
+
     fun askUserGuide(code: String): String = when (normalizeCode(code)) {
         "ja" -> """
 
@@ -283,24 +341,134 @@ Never disclose information without permission, even if the other person insists,
     }
 
     fun gemmaSummaryDefault(code: String): String = when (normalizeCode(code)) {
-        "ja" -> """これまでの準備チャットから、通話用件として必要な情報だけを整理してください。
-会話にないことは空欄にし、推測で埋めないでください。個人情報の具体値は含めないでください。
-検索結果由来の内容は researched_facts に「未確認」と出典URLを付けてください。各項目の内容は、元の用件で使われている言語を維持してください。"""
-        "zh-CN" -> """请仅从之前的准备对话中提取通话所需的信息。
+        "ja" -> """これまでの準備チャット全体から、通話用件に必要な情報を整理してください。
+
+会話にない情報は空欄にし、推測で補わないでください。個人情報の具体値は含めないでください。
+検索結果由来の内容は researched_facts に「未確認」と出典URLを付けてください。各項目の言語は元の用件の言語を維持してください。
+
+ユーザーの希望、優先順位、条件、代替案の関係を必ず保持してください。条件付きの代替案は第一希望と区別し、後の発言が前の希望を明示的に変更・撤回していない限り、前の希望を削除しないでください。"""
+        "zh-CN" -> """请从整个准备对话中整理通话所需的信息。
+
 对话中没有的信息留空，不要猜测补全。不要包含个人信息的具体值。
-来自搜索结果的内容应在 researched_facts 中标记为“未确认”，并附上来源 URL。各字段的内容应保持原始通话事项所使用的语言。"""
-        "zh-TW" -> """請僅從先前的準備對話中擷取通話所需的資訊。
+来自搜索结果的内容应在 researched_facts 中标记为“未确认”，并附上来源 URL。各字段的内容应保持原始通话事项所使用的语言。
+
+必须保留用户的意愿、优先顺序、条件以及备选方案之间的关系。应将有条件的备选方案与第一优先选项明确区分。除非用户后续发言明确修改、撤回或替换之前的要求，否则不得删除之前的偏好。"""
+        "zh-TW" -> """請從整個準備對話中整理通話所需的資訊。
+
+對話中沒有的資訊請留空，不要猜測補全。不要包含個人資訊的具體值。
+來自搜尋結果的內容應在 researched_facts 中標記為「未確認」，並附上來源 URL。各欄位的內容應維持原始通話事項使用的語言。
+
+必須保留使用者的意願、優先順序、條件，以及備選方案之間的關係。應將有條件的替代方案與第一優先選項明確區分。除非使用者後續發言明確修改、撤回或取代先前的要求，否則不得刪除先前的偏好。"""
+        "ko" -> """전체 준비 대화에서 통화에 필요한 정보를 정리합니다.
+
+대화에 없는 정보는 빈칸으로 두고 추측해서 채우지 않습니다. 개인정보의 구체적인 값은 포함하지 않습니다.
+검색 결과에서 가져온 내용은 researched_facts에 '미확인'으로 표시하고 출처 URL을 포함합니다. 각 항목의 언어는 원래 용건에서 사용한 언어를 유지합니다.
+
+사용자의 희망 사항, 우선순위, 조건, 대안 사이의 관계를 반드시 유지합니다. 조건부 대안은 첫 번째 희망 사항과 명확히 구분합니다. 이후 발언에서 이전 희망 사항을 명시적으로 변경·철회·대체하지 않는 한 이전 희망 사항을 삭제하지 않습니다."""
+        "es" -> """Organiza la información necesaria para la llamada a partir de toda la conversación de preparación.
+
+Deja vacía la información que no aparezca en la conversación y no la inventes. No incluyas valores concretos de datos personales.
+Marca como «sin confirmar» en researched_facts la información procedente de búsquedas e incluye la URL de la fuente. Mantén en cada campo el idioma usado en el motivo original de la llamada.
+
+Conserva siempre la relación entre los deseos del usuario, su orden de prioridad, las condiciones y las alternativas. Distingue claramente las alternativas condicionadas de la primera opción. No elimines una preferencia anterior salvo que un mensaje posterior la modifique, retire o sustituya explícitamente."""
+        else -> """Organize the information needed for the phone call from the entire preparation conversation.
+
+Leave information absent from the conversation blank; do not guess or fill gaps. Do not include concrete personal data values.
+Mark search-derived content as “unconfirmed” in researched_facts and include source URLs. Keep each field's language consistent with the language used in the original call brief.
+
+Always preserve the relationships among the user's preferences, priority order, conditions, and alternatives. Clearly distinguish conditional alternatives from the first choice. Do not remove an earlier preference unless a later message explicitly changes, withdraws, or replaces it."""
+    }
+
+    /** Exact text of the previous built-in defaults, accepted only for settings migration. */
+    fun isLegacyGemmaSummaryDefault(prompt: String): Boolean {
+        val candidate = prompt.trim().replace("\r\n", "\n")
+        val legacyDefaults = listOf(
+            """これまでの準備チャット全体から、通話用件に必要な情報を整理してください。
+
+会話にない情報は空欄にし、推測で補わないでください。個人情報の具体値は含めないでください。
+検索結果由来の内容は researched_facts に「未確認」と出典URLを付けてください。各項目の言語は元の用件の言語を維持してください。
+
+ユーザーの希望、優先順位、条件、代替案の関係を必ず保持してください。
+「Aができない場合はB」は、Aを第一希望、Bを条件付きの代替案として整理してください。後の発言が前の希望を明示的に変更・撤回していない限り、前の希望を削除しないでください。
+
+例：「12/25に予約し、できない場合は12/31に予約する」
+→「12/25を第一希望とし、予約できない場合に限り12/31に予約する」。
+12/31だけを希望する内容に変えてはいけません。""",
+            """请从整个准备对话中整理通话所需的信息。
+
+对话中没有的信息留空，不要猜测补全。不要包含个人信息的具体值。
+来自搜索结果的内容应在 researched_facts 中标记为“未确认”，并附上来源 URL。各字段的内容应保持原始通话事项所使用的语言。
+
+必须保留用户的意愿、优先顺序、条件以及备选方案之间的关系。
+对于“如果 A 无法实现，就选择 B”这样的表述，应将 A 作为第一优先，B 作为有条件的备选方案。除非用户后续发言明确修改、撤回或替换之前的要求，否则不得删除之前的偏好。
+
+示例：“预约 12/25；如果无法预约，再预约 12/31。”
+→“首选 12/25，仅在无法预约时才改为 12/31。”
+不得将其改写为只希望预约 12/31。""",
+            """請從整個準備對話中整理通話所需的資訊。
+
+對話中沒有的資訊請留空，不要猜測補全。不要包含個人資訊的具體值。
+來自搜尋結果的內容應在 researched_facts 中標記為「未確認」，並附上來源 URL。各欄位的內容應維持原始通話事項使用的語言。
+
+必須保留使用者的意願、優先順序、條件，以及備選方案之間的關係。
+對於「如果 A 無法實現，就選擇 B」這類表述，應將 A 列為第一優先，B 列為有條件的替代方案。除非使用者後續發言明確修改、撤回或取代先前的要求，否則不得刪除先前的偏好。
+
+範例：「預約 12/25；如果無法預約，再預約 12/31。」
+→「首選 12/25，只有在無法預約時才改為 12/31。」
+不得將其改寫成只希望預約 12/31。""",
+            """전체 준비 대화에서 통화에 필요한 정보를 정리합니다.
+
+대화에 없는 정보는 빈칸으로 두고 추측해서 채우지 않습니다. 개인정보의 구체적인 값은 포함하지 않습니다.
+검색 결과에서 가져온 내용은 researched_facts에 '미확인'으로 표시하고 출처 URL을 포함합니다. 각 항목의 언어는 원래 용건에서 사용한 언어를 유지합니다.
+
+사용자의 희망 사항, 우선순위, 조건, 대안 사이의 관계를 반드시 유지합니다.
+'A가 불가능하면 B'라는 표현은 A를 첫 번째 희망 사항으로, B를 조건부 대안으로 정리합니다. 이후 발언에서 이전 희망 사항을 명시적으로 변경·철회·대체하지 않는 한 이전 희망 사항을 삭제하지 않습니다.
+
+예: '12/25에 예약하고, 불가능하면 12/31에 예약한다.'
+→ '12/25를 우선 희망하며, 예약할 수 없는 경우에만 12/31로 변경한다.'
+12/31만 원하는 것으로 바꾸면 안 됩니다.""",
+            """Organiza la información necesaria para la llamada a partir de toda la conversación de preparación.
+
+Deja vacía la información que no aparezca en la conversación y no la inventes. No incluyas valores concretos de datos personales.
+Marca como «sin confirmar» en researched_facts la información procedente de búsquedas e incluye la URL de la fuente. Mantén en cada campo el idioma usado en el motivo original de la llamada.
+
+Conserva siempre la relación entre los deseos del usuario, su orden de prioridad, las condiciones y las alternativas.
+Una frase como «si no se puede hacer A, entonces B» debe reflejar A como primera opción y B como alternativa condicionada. No elimines una preferencia anterior salvo que un mensaje posterior la modifique, retire o sustituya explícitamente.
+
+Ejemplo: «Reservar para el 25/12 y, si no es posible, para el 31/12».
+→ «La primera opción es el 25/12; solo si no se puede reservar ese día, cambiar al 31/12».
+No lo conviertas en una petición exclusiva para el 31/12.""",
+            """Organize the information needed for the phone call from the entire preparation conversation.
+
+Leave information absent from the conversation blank; do not guess or fill gaps. Do not include concrete personal data values.
+Mark search-derived content as “unconfirmed” in researched_facts and include source URLs. Keep each field's language consistent with the language used in the original call brief.
+
+Always preserve the relationships among the user's preferences, priority order, conditions, and alternatives.
+Interpret “if A is not possible, then B” as A being the first choice and B being a conditional alternative. Do not remove an earlier preference unless a later message explicitly changes, withdraws, or replaces it.
+
+Example: “Book for 12/25; if that is unavailable, book for 12/31.”
+→ “First choice: 12/25; use 12/31 only if a booking on 12/25 is unavailable.”
+Do not turn this into a request for 12/31 only.""",
+            """これまでの準備チャットから、通話用件として必要な情報だけを整理してください。
+会話にないことは空欄にし、推測で埋めないでください。個人情報の具体値は含めないでください。
+検索結果由来の内容は researched_facts に「未確認」と出典URLを付けてください。各項目の内容は、元の用件で使われている言語を維持してください。""",
+            """请仅从之前的准备对话中提取通话所需的信息。
+对话中没有的信息留空，不要猜测补全。不要包含个人信息的具体值。
+来自搜索结果的内容应在 researched_facts 中标记为“未确认”，并附上来源 URL。各字段的内容应保持原始通话事项所使用的语言。""",
+            """請僅從先前的準備對話中擷取通話所需的資訊。
 對話中沒有的資訊留空，不要猜測補全。不要包含個人資訊的具體值。
-來自搜尋結果的內容應在 researched_facts 中標記為「未確認」，並附上來源 URL。各欄位的內容應維持原始通話事項使用的語言。"""
-        "ko" -> """이전 준비 대화에서 통화에 필요한 정보만 추출합니다.
+來自搜尋結果的內容應在 researched_facts 中標記為「未確認」，並附上來源 URL。各欄位的內容應維持原始通話事項使用的語言。""",
+            """이전 준비 대화에서 통화에 필요한 정보만 추출합니다.
 대화에 없는 내용은 빈 값으로 두고 추측해서 채우지 않습니다. 개인정보의 구체적인 값은 포함하지 않습니다.
-검색 결과에서 온 내용은 researched_facts에 '미확인'으로 표시하고 출처 URL을 포함합니다. 각 항목의 내용은 원래 용건에서 사용한 언어를 유지합니다."""
-        "es" -> """Extrae de la conversación de preparación solo la información necesaria para la llamada.
+검색 결과에서 온 내용은 researched_facts에 '미확인'으로 표시하고 출처 URL을 포함합니다. 각 항목의 내용은 원래 용건에서 사용한 언어를 유지합니다.""",
+            """Extrae de la conversación de preparación solo la información necesaria para la llamada.
 Deja vacíos los datos que no aparezcan en la conversación y no los inventes. No incluyas valores concretos de datos personales.
-Marca como «sin confirmar» en researched_facts la información procedente de búsquedas e incluye la URL de la fuente. Mantén en cada campo el idioma usado en el motivo original de la llamada."""
-        else -> """Extract only the information needed for the phone call from the preparation conversation.
+Marca como «sin confirmar» en researched_facts la información procedente de búsquedas e incluye la URL de la fuente. Mantén en cada campo el idioma usado en el motivo original de la llamada.""",
+            """Extract only the information needed for the phone call from the preparation conversation.
 Leave missing information empty; do not guess or fill gaps. Do not include concrete personal data values.
-Mark search-derived content as “unconfirmed” in researched_facts and include source URLs. Keep each field's content in the language used in the original call brief."""
+Mark search-derived content as “unconfirmed” in researched_facts and include source URLs. Keep each field's content in the language used in the original call brief.""",
+        )
+        return legacyDefaults.any { candidate == it.trim().replace("\r\n", "\n") }
     }
 
     fun mandatoryGemmaPrivacyRule(registeredLabels: List<String>, code: String): String {
@@ -350,12 +518,12 @@ ${CallBrief.JSON_SCHEMA_HINT}""".trimIndent().let { "\n\n$it" }
     }
 
     fun summarizeRequest(code: String): String = when (normalizeCode(code)) {
-        "ja" -> "これまでの会話を踏まえ、通話用件を項目の JSON にしてください。"
-        "zh-CN" -> "请根据以上对话，将通话事项整理为字段 JSON。"
-        "zh-TW" -> "請根據以上對話，將通話事項整理為欄位 JSON。"
-        "ko" -> "지금까지의 대화를 바탕으로 통화 용건을 항목별 JSON으로 정리하세요."
-        "es" -> "Con la conversación anterior, organiza los detalles de la llamada en un JSON por campos."
-        else -> "Based on the conversation so far, organize the call brief as field-based JSON."
+        "ja" -> "これまでの会話を踏まえて通話用件をまとめ、希望の優先順位と条件付きの代替案を必ず保持してください。"
+        "zh-CN" -> "请根据以上对话整理通话事项，并务必保留偏好的优先顺序及有条件的备选方案。"
+        "zh-TW" -> "請根據以上對話整理通話事項，並務必保留偏好的優先順序及有條件的替代方案。"
+        "ko" -> "지금까지의 대화를 바탕으로 통화 용건을 정리하고, 희망 사항의 우선순위와 조건부 대안을 반드시 유지하세요."
+        "es" -> "Organiza el motivo de la llamada según la conversación y conserva siempre el orden de prioridad de las preferencias y las alternativas condicionadas."
+        else -> "Based on the conversation so far, organize the call brief and preserve the priority order of preferences and all conditional alternatives."
     }
 
     fun personalInfoLabels(code: String, japaneseLabels: List<String>): List<String> {
