@@ -509,9 +509,23 @@ class AudioBridgeService : IAudioBridge.Stub {
                             t("mic: total=${total}bytes peak=$peakAll routed=$routed"); lastLog = now; peakAll = 0
                         }
                     }
-                } catch (e: Throwable) { te("マイク取得スレッドで例外", e) }
+                } catch (e: Throwable) {
+                    // stopMicCapture() が requested stop を立ててローカル pipe を閉じた直後の EPIPE は、
+                    // consumer が先に閉じたことを示す終了時の競合。停止が進行中の場合だけ INFO にし、
+                    // s.running=true のまま起きた EPIPE など予期しない失敗は従来どおり ERROR に残す。
+                    val expectedPipeClose = !s.running &&
+                        (e is java.io.IOException) &&
+                        (e.message?.contains("EPIPE", ignoreCase = true) == true ||
+                         e.message?.contains("broken pipe", ignoreCase = true) == true)
+                    if (expectedPipeClose) {
+                        t("mic sink closed during requested stop (expected EPIPE): ${e.message}")
+                    } else {
+                        te("マイク取得スレッドで例外", e)
+                    }
+                }
                 try { os.close() } catch (_: Throwable) {}
-                t("mic thread end total=${total}bytes")
+                t("mic thread end total=${total}bytes sessionRunning=${s.running} currentSession=${mic === s} " +
+                    "recordingState=${try { s.rec.recordingState } catch (_: Throwable) { -1 }}")
             }.also { it.start() }
             mic = s
             t("===== startMicCapture OK =====")
@@ -534,17 +548,25 @@ class AudioBridgeService : IAudioBridge.Stub {
     } catch (e: Throwable) { "実行失敗: ${err(e)}" }
 
     override fun stopMicCapture(): String {
-        val s = mic ?: return "マイク取得は動いていません"
+        val s = mic
+        if (s == null) {
+            t("stopMicCapture requested but mic session is null; uid=${Process.myUid()} recordingConfigs=${recordingConfigs()}")
+            return "マイク取得は動いていません"
+        }
         mic = null
-        t("stopMicCapture")
+        t("stopMicCapture begin running=${s.running} threadAlive=${s.thread?.isAlive == true} " +
+            "recordingState=${s.rec.recordingState} recordingConfigs=${recordingConfigs()}")
         s.running = false
-        try { s.watcher?.stop() } catch (_: Throwable) {}
+        try { s.watcher?.stop() } catch (e: Throwable) { t("AudioRoute watcher stop failed: ${err(e)}") }
         s.watcher = null
-        try { s.thread?.join(500) } catch (_: Throwable) {}
-        try { s.rec.stop() } catch (_: Throwable) {}
-        try { s.rec.release() } catch (_: Throwable) {}
-        try { s.sink.close() } catch (_: Throwable) {}
-        return "OK: マイク取得停止"
+        // read() がブロックしたまま join で待ち続けないよう、先に AudioRecord を停止する。
+        try { s.rec.stop(); t("AudioRecord.stop OK") } catch (e: Throwable) { t("AudioRecord.stop failed: ${err(e)}") }
+        try { s.thread?.join(1500) } catch (e: Throwable) { t("mic thread join failed: ${err(e)}") }
+        val threadAliveAfterJoin = s.thread?.isAlive == true
+        try { s.rec.release(); t("AudioRecord.release OK") } catch (e: Throwable) { t("AudioRecord.release failed: ${err(e)}") }
+        try { s.sink.close(); t("mic sink close OK") } catch (e: Throwable) { t("mic sink close failed: ${err(e)}") }
+        t("stopMicCapture end threadAlive=$threadAliveAfterJoin recordingConfigs=${recordingConfigs()}")
+        return if (threadAliveAfterJoin) "OK: マイク取得停止(読み取りスレッドの終了は未確認)" else "OK: マイク取得停止"
     }
 
     // ---------- 音声クライアント一覧(通話アプリの特定) ----------

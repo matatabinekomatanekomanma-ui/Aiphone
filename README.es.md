@@ -12,15 +12,17 @@ Aiphone es una aplicación experimental para Android cuyo objetivo es ayudar a p
 - Sesión de llamada en la que la IA responde según lo que diga la otra persona y el contexto de la conversación.
 - Traducción de voz bidireccional con Gemini Live, con selección de idioma de origen y de destino.
 - Guardar datos personales en el dispositivo y solicitar permiso al usuario antes de revelar determinados datos.
+- Cuando la opción **Grabar audio de llamadas** está activada (lo está de forma predeterminada), guardar el audio como archivos M4A en la carpeta compartida `Music/Aiphone/` del dispositivo.
 - Cambiar el idioma de la interfaz, incluidos inglés, chino simplificado y tradicional, coreano y español.
+
+Las grabaciones incluyen la voz de la otra persona y el audio que le llega, incluida la voz de IA/traducción. Si no se usa IA ni traducción, también se graba tu propia voz. Los archivos se guardan en la carpeta compartida Música del dispositivo.
 
 ### Ideas futuras
 
 - Atención de llamadas entrantes por IA
-- Grabación de llamadas
-- Transcripción de llamadas
+- Transcripción automática y archivo del contenido de las llamadas
 
-Son ideas futuras, no una promesa de que estén disponibles en la versión actual. Este README no presenta la grabación ni la transcripción como funciones ya implementadas.
+La grabación de llamadas ya está implementada. La transcripción automática y el archivo de las conversaciones siguen siendo posibles funciones futuras.
 
 ## Coste
 

@@ -23,9 +23,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * 翻訳タブ。言語を選んで「セット」すると、次の通話で翻訳が自動起動する(通話終了で解除)。
@@ -196,42 +194,35 @@ class TranslateTabController(
 
 
     private fun ensureOverlayForArming() {
-        if (Settings.canDrawOverlays(activity)) {
-            AiCallService.refreshBubble()
-            return
-        }
-        activity.lifecycleScope.launch(Dispatchers.IO) {
-            val ok = BridgeConnector.grantOverlayPermission(activity.packageName)
-            withContext(Dispatchers.Main) {
-                var granted = Settings.canDrawOverlays(activity)
-                if (ok && !granted) {
-                    kotlinx.coroutines.delay(400)
-                    granted = Settings.canDrawOverlays(activity)
-                }
-                if (granted) {
+        activity.lifecycleScope.launch {
+            val result = OverlayPermissionHelper.ensure(activity, "translate-set")
+            log("[overlay-diag] translate-set permission result=$result")
+            if (result.granted) {
+                if (!result.wasGrantedBefore) {
                     Toast.makeText(activity, AppLanguage.tr("重ねて表示を自動許可しました", activity), Toast.LENGTH_SHORT).show()
-                    AiCallService.refreshBubble()
-                } else {
-                    AlertDialog.Builder(activity)
-                        .setTitle(AppLanguage.tr("重ねて表示の許可が必要です", activity))
-                        .setMessage(AppLanguage.tr(
-                            if (ok) "自動許可の反映を確認できませんでした。設定で「他のアプリの上に表示」を許可してください。"
-                            else "重ねて表示を自動許可できませんでした。priv-kit の接続を確認するか、設定で許可してください。", activity
-                        ))
-                        .setPositiveButton(AppLanguage.tr("設定を開く", activity)) { _, _ ->
-                            try {
-                                activity.startActivity(
-                                    Intent(
-                                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                        "package:${activity.packageName}".toUri(),
-                                    ),
-                                )
-                            } catch (_: Exception) {
-                            }
-                        }
-                        .setNegativeButton(AppLanguage.tr("閉じる", activity), null)
-                        .show()
                 }
+                AiCallService.refreshBubble()
+            } else {
+                AlertDialog.Builder(activity)
+                    .setTitle(AppLanguage.tr("重ねて表示の許可が必要です", activity))
+                    .setMessage(AppLanguage.tr(
+                        if (result.shellGrantSucceeded) "shell で許可コマンドは成功しましたが、OS の権限状態を確認できませんでした。診断ログを確認してください。"
+                        else "shell 経由の自動許可を確認できませんでした。priv-kit 接続と診断ログを確認してください。", activity
+                    ))
+                    .setPositiveButton(AppLanguage.tr("設定を開く", activity)) { _, _ ->
+                        try {
+                            activity.startActivity(
+                                Intent(
+                                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    "package:${activity.packageName}".toUri(),
+                                ),
+                            )
+                        } catch (e: Exception) {
+                            log("[overlay-diag] overlay settings launch failed: ${e.javaClass.simpleName}: ${e.message}")
+                        }
+                    }
+                    .setNegativeButton(AppLanguage.tr("閉じる", activity), null)
+                    .show()
             }
         }
     }

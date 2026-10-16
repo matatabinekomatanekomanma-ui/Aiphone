@@ -47,14 +47,19 @@ class CallStateMonitor(
     @Volatile private var lastReportedActive = false
     @Volatile private var running = false
     @Volatile private var lastAudioMode: Int? = null
+    @Volatile private var lastTelephonyState = "UNINITIALIZED"
+    @Volatile private var lastTelephonyChangeAt = 0L
+    @Volatile private var lastAudioModeChangeAt = 0L
+    @Volatile private var lastDiagnosticLogAt = 0L
 
     private val poll = object : Runnable {
         override fun run() {
             if (!running) return
             try {
-                onAudioMode(am.mode)
+                onAudioMode(am.mode, "poll")
+                logDiagnosticSnapshot("poll", force = false)
             } catch (e: Exception) {
-                Log.w(TAG, "audio poll failed (${e.javaClass.simpleName})")
+                Log.e(TAG, "[call-diag] audio poll failed", e)
             }
             handler.postDelayed(
                 this,
@@ -64,10 +69,12 @@ class CallStateMonitor(
     }
 
     /** AudioManager.mode の変化（リスナー/ポーリング共通の処理） */
-    private fun onAudioMode(mode: Int) {
+    private fun onAudioMode(mode: Int, source: String) {
         val previousMode = lastAudioMode
         if (previousMode != mode) {
-            Log.i(TAG, "AudioManager mode changed ${modeName(previousMode)} -> ${modeName(mode)} ($mode)")
+            lastAudioModeChangeAt = System.currentTimeMillis()
+            Log.i(TAG, "[call-diag] AudioManager mode changed source=$source " +
+                "${modeName(previousMode)} -> ${modeName(mode)} ($mode) telActive=$telActive audioActiveBefore=$audioActive")
             lastAudioMode = mode
         }
         when (mode) {
@@ -75,21 +82,21 @@ class CallStateMonitor(
                 // ベル中は「通話確立」ではない
                 if (audioActive) {
                     audioActive = false
-                    recompute()
+                    recompute("audio-mode:${modeName(mode)}")
                 }
             }
             AudioManager.MODE_IN_CALL, AudioManager.MODE_IN_COMMUNICATION -> {
                 if (!audioActive) {
                     Log.i(TAG, "AudioManager mode=$mode → audioActive=true")
                     audioActive = true
-                    recompute()
+                    recompute("audio-mode:${modeName(mode)}")
                 }
             }
             else -> {
                 if (audioActive) {
                     Log.i(TAG, "AudioManager mode=$mode → audioActive=false")
                     audioActive = false
-                    recompute()
+                    recompute("audio-mode:${modeName(mode)}")
                 }
             }
         }
@@ -97,7 +104,7 @@ class CallStateMonitor(
 
     @RequiresApi(Build.VERSION_CODES.S)
     private fun startModeListener() {
-        val l = AudioManager.OnModeChangedListener { mode -> onAudioMode(mode) }
+        val l = AudioManager.OnModeChangedListener { mode -> onAudioMode(mode, "listener") }
         modeListener = l
         am.addOnModeChangedListener(context.mainExecutor, l)
     }
@@ -111,27 +118,34 @@ class CallStateMonitor(
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) startModern() else startLegacy()
         } catch (e: Exception) {
-            Log.e(TAG, "telephony start failed type=${e.javaClass.simpleName} (audio monitoring continues)")
+            Log.e(TAG, "[call-diag] telephony start failed (audio monitoring continues)", e)
         }
         try {
             val mode = am.mode
-            lastAudioMode = mode
             audioActive = mode == AudioManager.MODE_IN_CALL ||
                 mode == AudioManager.MODE_IN_COMMUNICATION
-        } catch (_: Throwable) {}
+            lastAudioMode = mode
+            lastAudioModeChangeAt = System.currentTimeMillis()
+            Log.i(TAG, "[call-diag] initial audio state mode=${modeName(mode)}($mode) audioActive=$audioActive")
+        } catch (e: Throwable) {
+            Log.w(TAG, "[call-diag] initial AudioManager.mode read failed", e)
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
                 startModeListener()
             } catch (e: Exception) {
-                Log.w(TAG, "mode listener failed type=${e.javaClass.simpleName}; polling only")
+                Log.w(TAG, "[call-diag] mode listener registration failed; polling only", e)
             }
         }
         handler.post(poll)
-        recompute()
-        Log.i(TAG, "CallStateMonitor started")
+        recompute("start")
+        logDiagnosticSnapshot("start", force = true)
+        Log.i(TAG, "[call-diag] CallStateMonitor started sdk=${Build.VERSION.SDK_INT} " +
+            "phonePermission=$phonePermission modeListener=${modeListener != null}")
     }
 
     fun stop() {
+        Log.i(TAG, "[call-diag] stop requested state=${diagnosticState()}")
         running = false
         handler.removeCallbacks(poll)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -154,6 +168,7 @@ class CallStateMonitor(
         }
         modernCb = null
         legacy = null
+        Log.i(TAG, "[call-diag] stopped state=${diagnosticState()}")
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
@@ -182,27 +197,53 @@ class CallStateMonitor(
             TelephonyManager.CALL_STATE_OFFHOOK -> "OFFHOOK"
             else -> "UNKNOWN($state)"
         }
-        Log.i(TAG, "Telephony state=$name")
+        val previous = lastTelephonyState
+        lastTelephonyState = name
+        lastTelephonyChangeAt = System.currentTimeMillis()
+        Log.i(TAG, "[call-diag] Telephony state $previous -> $name ($state)")
         when (state) {
             TelephonyManager.CALL_STATE_RINGING -> telActive = false
             TelephonyManager.CALL_STATE_OFFHOOK -> telActive = true
             TelephonyManager.CALL_STATE_IDLE -> telActive = false
         }
-        recompute()
+        recompute("telephony:$name")
     }
 
-    private fun recompute() {
+    private fun recompute(reason: String) {
         val active = telActive || audioActive
-        if (active == lastReportedActive) return
+        val changed = active != lastReportedActive
+        Log.i(TAG, "[call-diag] recompute reason=$reason telActive=$telActive audioActive=$audioActive " +
+            "effectiveActive=$active previousReported=$lastReportedActive changed=$changed")
+        if (!changed) {
+            logDiagnosticSnapshot(reason, force = false)
+            return
+        }
         lastReportedActive = active
+        logDiagnosticSnapshot("transition:$reason", force = true)
         if (active) {
-            Log.i(TAG, "call ACTIVE (tel=$telActive audio=$audioActive)")
+            Log.i(TAG, "[call-diag] call ACTIVE (tel=$telActive audio=$audioActive)")
             onActive()
         } else {
-            Log.i(TAG, "call IDLE")
+            Log.i(TAG, "[call-diag] call IDLE (tel=$telActive audio=$audioActive)")
             onIdle()
         }
     }
+
+    /** 一定間隔で両方の入力状態を記録し、通話中判定が残る信号を特定する。 */
+    private fun logDiagnosticSnapshot(reason: String, force: Boolean) {
+        val now = System.currentTimeMillis()
+        if (!force && now - lastDiagnosticLogAt < 5_000L) return
+        lastDiagnosticLogAt = now
+        Log.i(TAG, "[call-diag] snapshot reason=$reason ${diagnosticState()} " +
+            "telChangeAgeMs=${ageMs(lastTelephonyChangeAt, now)} " +
+            "audioModeChangeAgeMs=${ageMs(lastAudioModeChangeAt, now)}")
+    }
+
+    fun diagnosticState(): String = "telState=$lastTelephonyState telActive=$telActive " +
+        "audioMode=${modeName(lastAudioMode)}(${lastAudioMode ?: -1}) audioActive=$audioActive " +
+        "effectiveActive=${telActive || audioActive} reportedActive=$lastReportedActive running=$running"
+
+    private fun ageMs(timestamp: Long, now: Long): Long = if (timestamp <= 0L) -1L else (now - timestamp).coerceAtLeast(0L)
 
     private fun modeName(mode: Int?): String = when (mode) {
         null -> "UNINITIALIZED"

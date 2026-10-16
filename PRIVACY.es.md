@@ -37,9 +37,18 @@ Las condiciones adicionales de Gemini API de Google indican que las entradas y s
 - Los datos guardados en texto sin cifrar por versiones anteriores se intentan migrar al almacenamiento cifrado al leerlos. Si la migración falla, no se sobrescribe el valor original, por lo que puede quedar texto sin cifrar de versiones antiguas en el dispositivo. Si no se pueden descifrar datos personales existentes, el guardado se bloquea mientras el campo correspondiente esté vacío. Vuelva a introducir ese campo para reemplazar explícitamente el valor ilegible. Así se evita que los campos vacíos de la interfaz borren datos existentes. Si no se pueden descifrar los resúmenes de llamadas guardados, se bloquean la edición y la eliminación para no sobrescribir los datos originales.
 - Algunos ajustes, como el prompt del sistema editable por el usuario y la frase de prueba, no se cifran con el mismo mecanismo. No introduzca secretos ni datos personales innecesarios en ellos.
 - Los registros de diagnóstico normales están diseñados para no incluir transcripciones de llamadas, texto traducido ni contenido de respuestas de herramientas. Sin embargo, no se puede garantizar la eliminación completa de datos sensibles de todos los registros de la aplicación y de Android.
-- La versión actual no ofrece un archivo específico de grabaciones ni un archivo de transcripciones. Sin embargo, el audio puede transmitirse en flujo a Gemini API mientras una función de IA está activa.
+- Cuando la opción «Grabar audio de llamadas» está activada en Ajustes (activada de forma predeterminada), el audio se guarda como archivos M4A en la carpeta compartida `Music/Aiphone/` del dispositivo. No existe un archivo de transcripciones automáticas de llamadas. Por separado, el audio puede transmitirse en flujo a Gemini API mientras una función de IA está activa.
 
 Antes de entregar el dispositivo a otra persona, revise los datos y las claves guardados y borre los datos de la aplicación si procede. Desinstalarla suele borrar los datos privados de la app, pero no garantiza que se eliminen todas las copias de seguridad o del sistema.
+
+### Grabación de llamadas
+
+Cuando la opción «Grabar audio de llamadas» está activada en Ajustes (activada de forma predeterminada), se graban las llamadas y se guardan como archivos M4A en la carpeta compartida Música del dispositivo (`Music/Aiphone/`). La grabación incluye la voz de la otra persona y el audio que le llega (incluida la voz de IA/traducción; tu propia voz cuando no se usa IA ni traducción).
+
+- Las grabaciones no se envían a los servidores del desarrollador; se guardan en el dispositivo.
+- Al estar en una carpeta compartida, otras aplicaciones con acceso a archivos de música y los servicios de copia de seguridad o sincronización pueden verlas. Elimina las grabaciones que ya no necesites mediante un gestor de archivos.
+- Para grabar, la aplicación captura el audio reproducido por la app de llamadas mediante acceso privilegiado (priv-kit) y, cuando no se usa IA ni traducción, también graba tu micrófono.
+- La grabación puede requerir el consentimiento de la otra persona. Eres responsable de cumplir la ley e informar a la otra persona.
 
 ### Registros de diagnóstico de la dirección de llamada
 

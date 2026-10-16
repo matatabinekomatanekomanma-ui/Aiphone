@@ -84,17 +84,33 @@ object CallRecorder {
     @Volatile private var micStarting = false
     @Volatile private var micFd: ParcelFileDescriptor? = null
     @Volatile private var micRetryAt = 0L
+    // ローカル読み取りスレッドが先に終了しても、shell 側の AudioRecord は残ることがある。
+    // remoteLease は「この録音機能が bridge.start* に成功し、まだ bridge.stop* を送っていない」ことを表す。
+    @Volatile private var capRemoteLease = false
+    @Volatile private var micRemoteLease = false
+    @Volatile private var lastDiagnosticLogAt = 0L
 
     private fun log(msg: String) {
         Log.i(TAG, "[rec] $msg")
     }
 
-    // ================= 外から呼ぶ =================
+    fun diagnosticStateForLog(): String = diagnosticState()
+
+    private fun diagnosticState(): String = "active=${active.get()} session=${session != null} " +
+        "mixThreadAlive=${mixThread?.isAlive == true} superviseThreadAlive=${superviseThread?.isAlive == true} " +
+        "capRunning=$capRunning capStarting=$capStarting capFd=${capFd != null} capRemoteLease=$capRemoteLease " +
+        "micRunning=$micRunning micStarting=$micStarting micFd=${micFd != null} micRemoteLease=$micRemoteLease " +
+        "bridgeConnected=${BridgeConnector.bridge != null} ai=${AiSessionManager.running.get()} " +
+        "translate=${TranslateManager.running.get()}"
 
     /** 通話開始時に呼ぶ(設定で ON のときだけ)。すでに録音中なら何もしない */
     @Synchronized
     fun start(context: Context) {
-        if (active.get()) return
+        log("start requested ${diagnosticState()}")
+        if (active.get()) {
+            log("start ignored: already active ${diagnosticState()}")
+            return
+        }
         val app = context.applicationContext
         val s = try {
             Session.create(app)
@@ -106,17 +122,26 @@ object CallRecorder {
         peer.clear(); mine.clear()
         startWallMs = System.currentTimeMillis()
         capRetryAt = 0L; micRetryAt = 0L
+        capRemoteLease = false; micRemoteLease = false
         session = s
         active.set(true)
         mixThread = Thread({ mixLoop(s) }, "rec-mix").also { it.start() }
         superviseThread = Thread({ superviseLoop() }, "rec-supervise").also { it.start() }
-        log("通話の録音を開始: ${RELATIVE_DIR}/${s.displayName} (音量=${gainPercent}%)")
+        log("通話の録音を開始: ${RELATIVE_DIR}/${s.displayName} (音量=${gainPercent}%) ${diagnosticState()}")
     }
 
     /** 通話終了時に呼ぶ。ファイルの仕上げは別スレッドで行う */
     @Synchronized
     fun stop() {
-        if (!active.getAndSet(false)) return
+        val wasActive = active.getAndSet(false)
+        log("stop requested wasActive=$wasActive ${diagnosticState()}")
+        if (!wasActive) {
+            // active フラグと remote lease が食い違う場合もあるため、遠隔セッションを念のため解放する。
+            if (capRemoteLease || micRemoteLease || capFd != null || micFd != null) {
+                Thread({ stopStandalone(callBridgeStop = true); log("stop recovery complete ${diagnosticState()}") }, "rec-stop-recovery").start()
+            }
+            return
+        }
         val s = session
         val mt = mixThread
         val sv = superviseThread
@@ -125,7 +150,9 @@ object CallRecorder {
             try { sv?.interrupt() } catch (_: Throwable) {}
             stopStandalone(callBridgeStop = true)
             try { mt?.join(2000) } catch (_: Throwable) {}
+            log("local stream stop requested; recorder cleanup state=${diagnosticState()}")
             try { s?.finish() } catch (e: Throwable) { Log.w(TAG, "[rec] 仕上げに失敗: ${e.message}") }
+            log("stop cleanup finished ${diagnosticState()}")
         }, "rec-stop").start()
     }
 
@@ -135,8 +162,10 @@ object CallRecorder {
      */
     @Synchronized
     fun releaseForSession() {
+        log("releaseForSession requested active=${active.get()} ${diagnosticState()}")
         if (!active.get()) return
         stopStandalone(callBridgeStop = true)
+        log("releaseForSession after release ${diagnosticState()}")
         val until = System.currentTimeMillis() + 8000
         capRetryAt = until; micRetryAt = until
     }
@@ -268,6 +297,11 @@ object CallRecorder {
         val capOwned = ai || (tr && TranslateManager.usesCapture)
         val micOwned = ai || (tr && TranslateManager.usesMic)
         val now = System.currentTimeMillis()
+        val nowForLog = System.currentTimeMillis()
+        if (nowForLog - lastDiagnosticLogAt >= 5000L) {
+            lastDiagnosticLogAt = nowForLog
+            log("supervisor snapshot capOwned=$capOwned micOwned=$micOwned ${diagnosticState()}")
+        }
         if (capOwned) {
             if (capRunning) stopStandaloneCapture(callBridgeStop = false)
         } else if (!capRunning && !capStarting && now >= capRetryAt) {
@@ -297,8 +331,11 @@ object CallRecorder {
                     val res = try { bridge.startCapture(uid, CAPTURE_VARIANT, p[1]) } catch (e: Throwable) { "NG(exception): ${e.message}" }
                     try { p[1].close() } catch (_: Throwable) {}
                     if (res.startsWith("OK")) {
+                        capRemoteLease = true
+                        log("startCapture success app=${app.packageName} uid=$uid remoteLease=true active=${active.get()} result=${res.take(180)}")
                         if (!active.get()) {
-                            try { bridge.stopCapture() } catch (_: Throwable) {}
+                            try { log("startCapture completed after recorder stop; sending immediate bridge.stopCapture"); log("bridge.stopCapture result=${bridge.stopCapture()}") } catch (e: Throwable) { log("bridge.stopCapture failed after race: ${e.javaClass.simpleName}: ${e.message}") }
+                            capRemoteLease = false
                             try { p[0].close() } catch (_: Throwable) {}
                             return@Thread
                         }
@@ -310,7 +347,7 @@ object CallRecorder {
                         return@Thread
                     }
                     try { p[0].close() } catch (_: Throwable) {}
-                    try { bridge.stopCapture() } catch (_: Throwable) {}
+                    try { log("candidate startCapture NG; bridge.stopCapture result=${bridge.stopCapture()}") } catch (_: Throwable) {}
                 }
                 log("相手の声を取得できませんでした(通話アプリが見つからない、または取得に失敗)")
             } catch (e: Throwable) {
@@ -332,10 +369,14 @@ object CallRecorder {
                         if (n > 0) peer.write(buf, 0, n)
                     }
                 }
-            } catch (_: Throwable) {
+            } catch (e: Throwable) {
+                log("readCapture thread ended by exception type=${e.javaClass.simpleName} message=${e.message} " +
+                    "active=${active.get()} remoteLease=$capRemoteLease fdStillCurrent=${capFd === fd}")
             } finally {
                 try { fd.close() } catch (_: Throwable) {}
                 if (capFd === fd) { capFd = null; capRunning = false }
+                log("readCapture thread finished active=${active.get()} capRunning=$capRunning " +
+                    "remoteLease=$capRemoteLease fdStillCurrent=${capFd === fd}")
             }
         }, "rec-cap").start()
     }
@@ -352,8 +393,11 @@ object CallRecorder {
                     val res = try { bridge.startMicCapture(src, p[1]) } catch (e: Throwable) { "NG(exception): ${e.message}" }
                     try { p[1].close() } catch (_: Throwable) {}
                     if (res.startsWith("OK")) {
+                        micRemoteLease = true
+                        log("startMicCapture success source=$src remoteLease=true active=${active.get()} result=${res.take(180)}")
                         if (!active.get()) {
-                            try { bridge.stopMicCapture() } catch (_: Throwable) {}
+                            try { log("startMicCapture completed after recorder stop; sending immediate bridge.stopMicCapture"); log("bridge.stopMicCapture result=${bridge.stopMicCapture()}") } catch (e: Throwable) { log("bridge.stopMicCapture failed after race: ${e.javaClass.simpleName}: ${e.message}") }
+                            micRemoteLease = false
                             try { p[0].close() } catch (_: Throwable) {}
                             return@Thread
                         }
@@ -363,9 +407,10 @@ object CallRecorder {
                         readMic(p[0])
                         return@Thread
                     }
+                    log("startMicCapture NG source=$src result=${res.take(220)}")
                     try { p[0].close() } catch (_: Throwable) {}
                 }
-                log("自分のマイクを録音できませんでした")
+                log("自分のマイクを録音できませんでした ${diagnosticState()}")
             } catch (e: Throwable) {
                 log("マイクの開始で例外: ${e.message}")
             } finally {
@@ -390,17 +435,24 @@ object CallRecorder {
                         }
                     }
                 }
-            } catch (_: Throwable) {
+            } catch (e: Throwable) {
+                log("readMic thread ended by exception type=${e.javaClass.simpleName} message=${e.message} " +
+                    "active=${active.get()} remoteLease=$micRemoteLease fdStillCurrent=${micFd === fd}")
             } finally {
                 try { fd.close() } catch (_: Throwable) {}
                 if (micFd === fd) { micFd = null; micRunning = false }
+                log("readMic thread finished active=${active.get()} micRunning=$micRunning " +
+                    "remoteLease=$micRemoteLease fdStillCurrent=${micFd === fd}")
             }
         }, "rec-mic").start()
     }
 
     private fun stopStandalone(callBridgeStop: Boolean) {
-        stopStandaloneCapture(callBridgeStop)
+        // 通話終了時はマイクを最優先で止める。AudioPolicy の unregisterAudioPolicy
+        // (相手音声の取得停止) は端末によって時間がかかるため、capture を先に止めると
+        // その待ち時間だけ shell の AudioRecord が録音を続ける可能性がある。
         stopStandaloneMic(callBridgeStop)
+        stopStandaloneCapture(callBridgeStop)
     }
 
     /**
@@ -409,18 +461,51 @@ object CallRecorder {
      */
     private fun stopStandaloneCapture(callBridgeStop: Boolean) {
         val fd = capFd
-        val wasRunning = capRunning
+        val readerWasRunning = capRunning
+        val remoteLease = capRemoteLease
         capFd = null; capRunning = false
-        if (callBridgeStop && wasRunning) try { BridgeConnector.bridge?.stopCapture() } catch (_: Throwable) {}
-        try { fd?.close() } catch (_: Throwable) {}
+        // false は AI/翻訳へ所有権を渡す呼び出し。true は自分が開始した shell セッションを明示的に止める。
+        capRemoteLease = false
+        log("stopStandaloneCapture callBridgeStop=$callBridgeStop remoteLease=$remoteLease readerWasRunning=$readerWasRunning fdPresent=${fd != null} active=${active.get()}")
+        if (callBridgeStop && remoteLease) {
+            val bridge = BridgeConnector.bridge
+            if (bridge == null) {
+                log("WARN cannot stop remote capture: BridgeConnector.bridge=null; shell service reconnect/destroy should clean it up")
+            } else try {
+                log("bridge.stopCapture result=${bridge.stopCapture()}")
+            } catch (e: Throwable) {
+                log("bridge.stopCapture failed: ${e.javaClass.simpleName}: ${e.message}")
+            }
+        } else if (!callBridgeStop && remoteLease) {
+            log("capture remote lease relinquished to AI/translation; do not stop bridge session")
+        } else if (callBridgeStop && !remoteLease) {
+            log("remote capture lease was already cleared; no stop command needed")
+        }
+        try { fd?.close() } catch (e: Throwable) { log("capture fd close failed: ${e.message}") }
     }
 
     private fun stopStandaloneMic(callBridgeStop: Boolean) {
         val fd = micFd
-        val wasRunning = micRunning
+        val readerWasRunning = micRunning
+        val remoteLease = micRemoteLease
         micFd = null; micRunning = false
-        if (callBridgeStop && wasRunning) try { BridgeConnector.bridge?.stopMicCapture() } catch (_: Throwable) {}
-        try { fd?.close() } catch (_: Throwable) {}
+        micRemoteLease = false
+        log("stopStandaloneMic callBridgeStop=$callBridgeStop remoteLease=$remoteLease readerWasRunning=$readerWasRunning fdPresent=${fd != null} active=${active.get()}")
+        if (callBridgeStop && remoteLease) {
+            val bridge = BridgeConnector.bridge
+            if (bridge == null) {
+                log("WARN cannot stop remote mic: BridgeConnector.bridge=null; shell service reconnect/destroy should clean it up")
+            } else try {
+                log("bridge.stopMicCapture result=${bridge.stopMicCapture()}")
+            } catch (e: Throwable) {
+                log("bridge.stopMicCapture failed: ${e.javaClass.simpleName}: ${e.message}")
+            }
+        } else if (!callBridgeStop && remoteLease) {
+            log("mic remote lease relinquished to AI/translation; do not stop bridge session")
+        } else if (callBridgeStop && !remoteLease) {
+            log("remote mic lease was already cleared; this may mean the reader ended before stop; checking shell session is recommended")
+        }
+        try { fd?.close() } catch (e: Throwable) { log("mic fd close failed: ${e.message}") }
     }
 
     // ================= 部品 =================

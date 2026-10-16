@@ -21,6 +21,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import priv.kit.core.Privilege
 
 /**
@@ -146,6 +148,19 @@ class AiCallService : Service() {
         ensureChannel()
         startAsForeground()
         BridgeConnector.start(scope)
+        // 用件セットを一度も行っていない初回通話でも、priv-kit 接続時に shell で権限を付与する。
+        scope.launch {
+            BridgeConnector.state.collectLatest { bridge ->
+                if (bridge == null) {
+                    Log.i(TAG, "[overlay-diag] AudioBridge disconnected; shell overlay permission check waits for reconnect")
+                } else {
+                    Log.i(TAG, "[overlay-diag] AudioBridge connected; checking shell overlay permission")
+                    val result = OverlayPermissionHelper.ensure(this@AiCallService, "bridge-connected")
+                    Log.i(TAG, "[overlay-diag] bridge-connected result=$result")
+                    if (result.granted) handler.post { updateBubble() }
+                }
+            }
+        }
         bubble = ReturnBubbleController(this)
         callMonitor = CallStateMonitor(
             this,
@@ -153,12 +168,22 @@ class AiCallService : Service() {
             onIdle = { handler.post { onCallIdle() } },
         ).also { it.start() }
         handler.postDelayed(warnRunnable, WARN_FIRST_DELAY_MS)
-        Log.i(TAG, "AiCallService created (priv-kit)")
+        Log.i(TAG, "AiCallService created (priv-kit) sdk=${Build.VERSION.SDK_INT} " +
+            "overlayPermission=${android.provider.Settings.canDrawOverlays(this)} " +
+            "bridgeConnected=${BridgeConnector.bridge != null} callMonitor=${callMonitor?.diagnosticState()}")
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.i(TAG, "[service-diag] onStartCommand startId=$startId flags=$flags intentAction=${intent?.action} " +
+            "callActive=$callActive bridgeConnected=${BridgeConnector.bridge != null} " +
+            "monitor=${callMonitor?.diagnosticState()}")
+        return START_STICKY
+    }
 
     override fun onDestroy() {
+        Log.w(TAG, "[service-diag] onDestroy callActive=$callActive " +
+            "monitor=${callMonitor?.diagnosticState()} recorder=${CallRecorder.diagnosticStateForLog()} " +
+            "bridgeConnected=${BridgeConnector.bridge != null}")
         instance = null
         handler.removeCallbacks(warnRunnable)
         BridgeConnector.stop()
@@ -181,11 +206,11 @@ class AiCallService : Service() {
         callActive = true
         updateBubble()
         handler.post { checkPrivilege() }
-        Log.i(
-            TAG,
-            "onCallActive translateArmed=${TranslateStore.isArmed()} briefArmed=${CallBriefStore.isActive()} " +
-                "bridge=${BridgeConnector.bridge != null}",
-        )
+        val recordEnabled = getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_RECORD_CALLS, true)
+        Log.i(TAG, "[call-diag] onCallActive monitor=${callMonitor?.diagnosticState()} " +
+            "translateArmed=${TranslateStore.isArmed()} briefArmed=${CallBriefStore.isActive()} " +
+            "bridgeConnected=${BridgeConnector.bridge != null} recordEnabled=$recordEnabled " +
+            "recorder=${CallRecorder.diagnosticStateForLog()}")
         when {
             // 翻訳がセットされていれば、AI 代行の代わりに翻訳を起動する(両方は同時に動かさない)
             TranslateStore.isArmed() -> startTranslateIfArmed()
@@ -193,7 +218,7 @@ class AiCallService : Service() {
             else -> Log.i(TAG, "セットなし: AI は自動起動しません")
         }
         // 通話の録音(AI・翻訳の有無にかかわらず。AI・翻訳の開始後に呼ぶので、取得・マイクの持ち主が決まっている)
-        if (getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_RECORD_CALLS, true)) {
+        if (recordEnabled) {
             CallRecorder.gainPercent = recordGain(getSharedPreferences(PREFS, MODE_PRIVATE))
             CallRecorder.start(applicationContext)
         }
@@ -210,8 +235,11 @@ class AiCallService : Service() {
     }
 
     private fun onCallIdle() {
+        Log.i(TAG, "[call-diag] onCallIdle entered previousCallActive=$callActive " +
+            "monitor=${callMonitor?.diagnosticState()} recorder=${CallRecorder.diagnosticStateForLog()}")
         callActive = false
         CallRecorder.stop()
+        Log.i(TAG, "[call-diag] CallRecorder.stop returned; recorder=${CallRecorder.diagnosticStateForLog()}")
         if (AiSessionManager.running.get()) {
             AiSessionManager.stop()
         }
@@ -225,6 +253,8 @@ class AiCallService : Service() {
         }
         applyPostCallArmPolicy()
         updateBubble()
+        Log.i(TAG, "[call-diag] onCallIdle completed recorder=${CallRecorder.diagnosticStateForLog()} " +
+            "monitor=${callMonitor?.diagnosticState()}")
     }
 
     /** 設定に従い、通話終了後の電話待機・用件の扱いを適用する */
@@ -357,11 +387,13 @@ class AiCallService : Service() {
         val ai = AiSessionManager.running.get() || tr
         val armed = CallBriefStore.isActive() || tArmed
         // セット中（電話待機）は自アプリ前面でも表示。通話/AI 中は背面のときのみ（従来どおり）
-        val show = when {
-            armed -> true
-            (callActive || ai) && !appInForeground -> true
-            else -> false
+        val showReason = when {
+            armed -> "armed"
+            (callActive || ai) && !appInForeground -> "call-or-ai-in-background"
+            callActive || ai -> "call-or-ai-but-app-foreground"
+            else -> "idle-unarmed"
         }
+        val show = showReason == "armed" || showReason == "call-or-ai-in-background"
         val brief = CallBriefStore.active
         val sub = if (tr || tArmed) {
             TranslateStore.brief(getSharedPreferences(PREFS, MODE_PRIVATE))
@@ -371,7 +403,8 @@ class AiCallService : Service() {
         Log.i(
             TAG,
             "updateBubble show=$show call=$callActive ai=$ai armed=$armed " +
-                "fg=$appInForeground overlay=${bubble?.canDrawOverlays()} brief=$sub",
+                "fg=$appInForeground overlay=${bubble?.canDrawOverlays()} bridge=${BridgeConnector.bridge != null} " +
+                "reason=$showReason brief=$sub monitor=${callMonitor?.diagnosticState()}",
         )
         if (!show) {
             bubble?.hide()
@@ -391,6 +424,8 @@ class AiCallService : Service() {
             ReturnBubbleController.Mode.IN_CALL -> "通話中"
             ReturnBubbleController.Mode.AI_ACTIVE -> if (tr) "翻訳中" else "AI通話中"
         }
+        Log.i(TAG, "[overlay-diag] request show mode=$mode reason=$showReason overlay=${bubble?.canDrawOverlays()} " +
+            "serviceCallActive=$callActive foreground=$appInForeground")
         bubble?.show(mode, AppLanguage.tr(title, this), sub.ifBlank { AppLanguage.tr("用件なし", this) })
     }
 

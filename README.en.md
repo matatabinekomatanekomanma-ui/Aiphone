@@ -12,15 +12,17 @@ Aiphone is an experimental Android app intended to help users prepare the purpos
 - A call session that lets AI respond to the other party's speech and the conversation context.
 - Two-way voice translation with Gemini Live; users can choose the source and target languages.
 - Save personal details on the device and request user permission before AI discloses selected details.
+- When **Record call audio** is enabled (on by default), save call audio as M4A files in the device's shared `Music/Aiphone/` folder.
 - Change the app UI language, including English, Chinese (Simplified and Traditional), Korean, and Spanish.
+
+Recordings include the other party's voice and the audio delivered to them, including AI/translation voice. When neither AI nor translation is used, your own voice is also recorded. Files are stored in the shared Music folder on the device.
 
 ### Planned ideas
 
 - AI handling of incoming calls
-- Call recording
-- Call transcription
+- Automatic call transcription and transcript storage
 
-These are future ideas, not a promise that they are available in the current version. Call recording and transcription are not presented as implemented features in this README.
+Call recording is implemented. Automatically transcribing and archiving call contents remains a possible future feature.
 
 ## Cost
 

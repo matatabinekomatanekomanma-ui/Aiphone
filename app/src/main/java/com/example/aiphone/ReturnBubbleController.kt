@@ -43,10 +43,16 @@ class ReturnBubbleController(private val context: Context) {
 
     /** 表示または内容更新 */
     fun show(mode: Mode, title: String, subtitle: String) {
-        if (!canDrawOverlays()) {
-            Log.w(TAG, "overlay permission missing")
+        val allowed = try { canDrawOverlays() } catch (e: Throwable) {
+            Log.e(TAG, "[overlay-diag] canDrawOverlays threw ${e.javaClass.simpleName}: ${e.message}", e)
+            false
+        }
+        if (!allowed) {
+            Log.w(TAG, "[overlay-diag] show skipped: canDrawOverlays=false mode=$mode " +
+                "bridgeConnected=${BridgeConnector.bridge != null} existingView=${view != null}")
             return
         }
+        Log.i(TAG, "[overlay-diag] show allowed mode=$mode existingView=${view != null}")
         val t = title.ifBlank {
             AppLanguage.tr(when (mode) {
                 Mode.WAITING -> "電話待機"
@@ -63,7 +69,10 @@ class ReturnBubbleController(private val context: Context) {
     }
 
     fun hide() {
-        val v = view ?: return
+        val v = view ?: run {
+            Log.i(TAG, "[overlay-diag] hide requested but no view exists")
+            return
+        }
         try { wm.removeView(v) } catch (_: Throwable) {}
         view = null
         params = null
@@ -134,7 +143,10 @@ class ReturnBubbleController(private val context: Context) {
             // タイトルや補足には通話用件などが入る可能性があるため、内容はログに残さない。
             Log.i(TAG, "status pill shown mode=$mode y=$yFromTop")
         } catch (e: Throwable) {
-            Log.e(TAG, "pill show failed", e)
+            val overlayAllowedAfterFailure = try { canDrawOverlays() } catch (_: Throwable) { false }
+            Log.e(TAG, "[overlay-diag] WindowManager.addView failed type=${e.javaClass.name} " +
+                "message=${e.message} canDrawOverlays=$overlayAllowedAfterFailure " +
+                "params=${widthPx}x${heightPx} flags=${p.flags} windowType=$type", e)
         }
     }
 

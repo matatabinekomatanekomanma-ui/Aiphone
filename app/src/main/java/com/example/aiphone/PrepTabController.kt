@@ -1,7 +1,6 @@
 package com.example.aiphone
 
 import android.content.SharedPreferences
-import android.provider.Settings
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
@@ -109,28 +108,19 @@ class PrepTabController(
     }
 
     private fun ensureOverlayForArming() {
-        if (Settings.canDrawOverlays(activity)) {
-            AiCallService.refreshBubble()
-            return
-        }
-        activity.lifecycleScope.launch(Dispatchers.IO) {
-            val ok = BridgeConnector.grantOverlayPermission(activity.packageName)
-            withContext(Dispatchers.Main) {
-                // 付与直後は Settings が遅延することがあるため短く再確認
-                var granted = Settings.canDrawOverlays(activity)
-                if (ok && !granted) {
-                    kotlinx.coroutines.delay(400)
-                    granted = Settings.canDrawOverlays(activity)
-                }
-                if (granted) {
+        activity.lifecycleScope.launch {
+            val result = OverlayPermissionHelper.ensure(activity, "prep-set")
+            log("[overlay-diag] prep-set permission result=$result")
+            if (result.granted) {
+                if (!result.wasGrantedBefore) {
                     Toast.makeText(activity, AppLanguage.tr("重ねて表示を自動許可しました", activity), Toast.LENGTH_SHORT).show()
-                    AiCallService.refreshBubble()
-                } else {
-                    promptOverlaySettings(
-                        if (ok) "自動許可の反映を確認できませんでした。設定画面で「他のアプリの上に表示」を許可してください。"
-                        else "重ねて表示を自動許可できませんでした。priv-kit の接続を確認するか、設定画面で許可してください。"
-                    )
                 }
+                AiCallService.refreshBubble()
+            } else {
+                promptOverlaySettings(
+                    if (result.shellGrantSucceeded) "shell で許可コマンドは成功しましたが、OS の権限状態を確認できませんでした。診断ログを確認してください。"
+                    else "shell 経由の自動許可を確認できませんでした。priv-kit 接続と診断ログを確認してください。"
+                )
             }
         }
     }

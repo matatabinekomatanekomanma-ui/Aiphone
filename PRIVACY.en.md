@@ -37,7 +37,7 @@ Google's Gemini API Additional Terms explain that inputs and outputs from free s
 - Data stored in plaintext by older versions is migrated to encrypted storage when read. If migration fails, the original value is not overwritten, so legacy plaintext may remain on the device. If encrypted personal data cannot be decrypted, saving remains blocked while the corresponding field is blank. Re-enter that field to explicitly replace the unreadable value. This prevents blank UI fields from erasing existing data. If saved call briefs cannot be decrypted, editing and deletion are blocked rather than overwriting the original data.
 - Some settings, including the user-editable system prompt and test utterance, are not encrypted with the same mechanism. Do not enter secrets or unnecessary personal information in them.
 - Normal diagnostic logs are intended not to include call transcriptions, translations, or tool-response payloads. However, complete sanitization of all app and Android system logs cannot be guaranteed.
-- The current version does not provide a dedicated call-recording file archive or transcription archive. However, audio may be streamed to Gemini API while an AI feature is active.
+- When “Record call audio” is enabled in Settings (on by default), call audio is saved as M4A files in the device’s shared `Music/Aiphone/` folder. There is no automatic call-transcription archive. Separately, audio may be streamed to Gemini API while an AI feature is active.
 
 Before handing your device to someone else, check for stored information and API keys and clear app data if appropriate. Uninstalling normally deletes private app data, but this does not guarantee deletion of every backup or system-side copy.
 
